@@ -243,7 +243,7 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
 
   <div class="filters">
     <label>Ano<select id="fAno"></select></label>
-    <span id="fMesWrap" class="fl">Mês dos indicadores<span class="mesnav"><button class="btn sm" id="btnMesAnt" title="Mês anterior">‹</button><select id="fMes"></select><button class="btn sm" id="btnMesProx" title="Próximo mês">›</button></span></span>
+    <span id="fMesWrap" class="fl"><span id="fMesLbl">Mês dos indicadores</span><span class="mesnav"><button class="btn sm" id="btnMesAnt" title="Mês anterior">‹</button><select id="fMes"></select><button class="btn sm" id="btnMesProx" title="Próximo mês">›</button></span></span>
     <label>Empresa<select id="fEmpresa"></select></label>
     <label>Ramo<select id="fRamo"></select></label>
     <label>Seguradora<select id="fSeg"></select></label>
@@ -704,7 +704,7 @@ function renderKPIs(c){
   $("kPremio").innerHTML=[
     kpi("Prêmio total das ativas",brl(c.premA),"Média por apólice: "+brl(c.ativas.length?c.premA/c.ativas.length:0),"Soma do PRÊMIO TOTAL das apólices ativas no mês."),
     kpi("Importância segurada",compacto(c.isA),"Soma da IS das ativas","Soma da IMPORTÂNCIA SEGURADA (IS) das apólices ativas."),
-    kpi("Pago em "+c.ano,brl(c.pagoAte),"Até "+MESES[c.mes]+" · "+(c.aPagarAte?'<b class="t-crit">'+brl(c.aPagarAte)+" em aberto</b> · ":"")+"a pagar depois: "+brl(c.aPagarResto),"Parcelas pagas de janeiro até o mês selecionado (regime de caixa)."),
+    (function(){var pm=c.cx.pago[c.mes];return kpi("Pago em "+MESES_L[c.mes],brl(pm.real),(pm.prev?'<b class="t-crit">'+brl(pm.prev)+" a pagar no mês</b> · ":"")+"Acumulado Jan–"+MESES[c.mes]+": "+brl(c.pagoAte)+(c.aPagarAte-pm.prev>0.5?' · <b class="t-crit">'+brl(c.aPagarAte-pm.prev)+" em aberto de meses anteriores</b>":""),"Parcelas pagas no mês selecionado (regime de caixa). Abaixo, o acumulado do ano até esse mês.")})(),
     kpi("Taxa média",pct(c.taxa,3),"Prêmio ÷ importância segurada","Considera apólices ativas com IS preenchida.")
   ].join("");
   $("kAprop").innerHTML=[
@@ -900,18 +900,28 @@ $("btnExcluirSin").onclick=async function(){var id=EDS.id;if(!confirm("Excluir e
 
 /* ================= aba Fechamento mensal ================= */
 function renderFechamento(){
-  var ab=primeiraAberta(S.base),r=sim(ab)[ab]||{},F=filtro();
-  var lin=S.base.apolices.map(function(p){var x=r[p.id]||{v:0,saldo:p.saldo};return {p:p,v:x.v,saldo:x.saldo,retro:x.v>p.aprop+0.01}}).filter(function(l){return l.v});
-  var tot=lin.reduce(function(t,l){return t+l.v},0),retro=lin.filter(function(l){return l.retro});
-  var pend=[];S.base.apolices.forEach(function(p){p.parcelas.forEach(function(x){if(x.comp===ab&&!x.pago)pend.push(x)})});
-  $("fResumo").innerHTML='<div class="fbox"><div><div class="mu">Competência em aberto</div><div class="big">'+MESES_L[+ab.slice(5,7)-1]+"/"+ab.slice(0,4)+'</div></div><div><div class="mu">Apropriação prevista</div><div class="big">'+brl2(tot)+'</div><div class="mu">'+lin.length+" apólices"+(retro.length?" · "+retro.length+" com apropriação retroativa":"")+'</div></div><div><div class="mu">Parcelas do mês em aberto</div><div class="big">'+pend.length+'</div><div class="mu">'+brl2(pend.reduce(function(t,x){return t+x.valor},0))+"</div></div></div>";
-  $("btnFechar").textContent="Fechar "+compLbl(ab);
-  var vis=lin.filter(function(l){return F(l.p)}).sort(function(a,b){return b.v-a.v});
-  var h='<thead><tr><th>Nº apólice</th><th class="left">Empresa</th><th class="left">Ramo</th><th class="left">Seguradora</th><th>Aprop./mês</th><th>Apropriar em '+compLbl(ab)+'</th><th>Saldo após</th><th class="left">Obs.</th></tr></thead><tbody>';
-  vis.slice(0,500).forEach(function(l){h+="<tr><td>"+esc(l.p.ap)+'</td><td class="left">'+esc(l.p.emp)+'</td><td class="left">'+esc(l.p.ramo)+'</td><td class="left">'+esc(l.p.seg)+"</td><td>"+brl2(l.p.aprop)+"</td><td><b>"+brl2(l.v)+"</b></td><td>"+brl2(l.saldo)+'</td><td class="left">'+(l.retro?'<span class="badge warn">Retroativa</span>':"")+(l.saldo<=0?' <span class="badge neutral">Última parcela</span>':"")+"</td></tr>"});
+  var ab=primeiraAberta(S.base),F=filtro(),c=comp(+$("fAno").value,+$("fMes").value),a=abaDe(c);
+  var porId={};S.base.apolices.forEach(function(p){porId[p.id]=p});
+  var estado=c<S.base.cutover?"planilha":a.fonte==="fechado"?"fechado":c===ab?"aberto":"futuro";
+  var lin=a.linhas.filter(function(l){return l.aprop}).map(function(l){var p=l.id&&porId[l.id],am=p?p.aprop:l.aprop;return {l:l,am:am,v:l.aprop,saldo:l.acum,retro:p&&l.aprop>am+0.01}});
+  var tot=lin.reduce(function(t,x){return t+x.v},0),retro=lin.filter(function(x){return x.retro});
+  var parc=[];S.base.apolices.forEach(function(p){p.parcelas.forEach(function(x){if(x.comp===c)parc.push(x)})});
+  var pAb=parc.filter(function(x){return !x.pago}),pPg=parc.filter(function(x){return x.pago});
+  var rot={planilha:'<span class="badge neutral">Planilha (somente leitura)</span>',fechado:'<span class="badge good">✓ Fechado</span>',aberto:'<span class="badge warn">Em aberto</span>',futuro:'<span class="badge neutral">Projeção</span>'}[estado];
+  var f=S.base.fechamentos.find(function(x){return x.comp===c});
+  $("fResumo").innerHTML='<div class="fbox"><div><div class="mu">Competência</div><div class="big">'+MESES_L[+c.slice(5,7)-1]+"/"+c.slice(0,4)+'</div><div style="margin-top:4px">'+rot+'</div></div>'+
+    '<div><div class="mu">'+(estado==="aberto"||estado==="futuro"?"Apropriação prevista":"Apropriação do mês")+'</div><div class="big">'+brl2(tot)+'</div><div class="mu">'+lin.length+" apólices"+(retro.length?" · "+retro.length+" com apropriação retroativa":"")+(f?" · fechado por "+esc(f.por)+" em "+new Date(f.em).toLocaleDateString("pt-BR"):"")+"</div></div>"+
+    '<div><div class="mu">Parcelas do mês</div><div class="big">'+parc.length+'</div><div class="mu">Pagas '+brl2(pPg.reduce(function(t,x){return t+x.valor},0))+" · em aberto "+brl2(pAb.reduce(function(t,x){return t+x.valor},0))+"</div></div></div>"+
+    (estado==="futuro"?'<div class="note mu" style="margin-top:8px">Para fechar '+compLbl(c)+", feche antes "+compLbl(ab)+".</div>":estado==="planilha"?'<div class="note mu" style="margin-top:8px">Meses até '+compLbl(compAdd(S.base.cutover,-1))+" vêm da planilha (aba "+esc(a.nome.replace("Planilha · ",""))+").</div>":"");
+  $("btnFechar").textContent="Fechar "+compLbl(ab);$("btnFechar").hidden=estado!=="aberto";
+  var vis=lin.filter(function(x){return F(x.l)}).sort(function(a,b){return b.v-a.v});
+  var h='<thead><tr><th>Nº apólice</th><th class="left">Empresa</th><th class="left">Ramo</th><th class="left">Seguradora</th><th>Aprop./mês</th><th>'+(estado==="aberto"||estado==="futuro"?"Apropriar em ":"Apropriado em ")+compLbl(c)+'</th><th>Saldo após</th><th class="left">Obs.</th></tr></thead><tbody>';
+  if(!vis.length)h+='<tr><td colspan="8" class="left mu">Sem apropriação neste mês para os filtros selecionados.</td></tr>';
+  vis.slice(0,600).forEach(function(x){var l=x.l;h+="<tr><td>"+esc(l.ap)+'</td><td class="left">'+esc(l.emp)+'</td><td class="left">'+esc(l.ramo)+'</td><td class="left">'+esc(l.seg)+"</td><td>"+brl2(x.am)+"</td><td><b>"+brl2(x.v)+"</b></td><td>"+brl2(x.saldo||0)+'</td><td class="left">'+(x.retro?'<span class="badge warn">Retroativa</span>':"")+(x.saldo<=0.005&&estado!=="planilha"?' <span class="badge neutral">Última parcela</span>':"")+"</td></tr>"});
+  if(vis.length)h+='<tr class="tot"><td>Total ('+vis.length+')</td><td></td><td></td><td></td><td></td><td>'+brl2(vis.reduce(function(t,x){return t+x.v},0))+"</td><td>"+brl2(vis.reduce(function(t,x){return t+(x.saldo||0)},0))+"</td><td></td></tr>";
   $("tbFech").innerHTML=h+"</tbody>";
   var fs=S.base.fechamentos.slice().reverse();
-  $("tbFechados").innerHTML='<thead><tr><th class="left">Competência</th><th>Apropriado</th><th>Apólices</th><th class="left">Fechado por</th><th>Em</th><th></th></tr></thead><tbody>'+(fs.length?fs.map(function(f,i){var t=f.linhas.reduce(function(s,l){return s+(l.aprop||0)},0);return '<tr><td class="left"><b>'+compLbl(f.comp)+"</b></td><td>"+brl2(t)+"</td><td>"+f.linhas.filter(function(l){return l.aprop}).length+'</td><td class="left">'+esc(f.por)+"</td><td>"+new Date(f.em).toLocaleString("pt-BR")+'</td><td><button class="btn sm" data-xl="'+f.comp+'">Excel</button>'+(i===0?' <button class="btn sm danger" data-reabrir="'+f.comp+'">Reabrir</button>':"")+"</td></tr>"}).join(""):'<tr><td colspan="6" class="left mu">Nenhum mês fechado ainda no painel. Até '+compLbl(compAdd(S.base.cutover,-1))+" os dados vêm da planilha.</td></tr>")+"</tbody>";
+  $("tbFechados").innerHTML='<thead><tr><th class="left">Competência</th><th>Apropriado</th><th>Apólices</th><th class="left">Fechado por</th><th>Em</th><th></th></tr></thead><tbody>'+(fs.length?fs.map(function(f,i){var t=f.linhas.reduce(function(s,l){return s+(l.aprop||0)},0);return '<tr><td class="left"><b>'+compLbl(f.comp)+'</b> <button class="btn sm" data-ver="'+f.comp+'">Ver</button></td><td>'+brl2(t)+"</td><td>"+f.linhas.filter(function(l){return l.aprop}).length+'</td><td class="left">'+esc(f.por)+"</td><td>"+new Date(f.em).toLocaleString("pt-BR")+'</td><td><button class="btn sm" data-xl="'+f.comp+'">Excel</button>'+(i===0?' <button class="btn sm danger" data-reabrir="'+f.comp+'">Reabrir</button>':"")+"</td></tr>"}).join(""):'<tr><td colspan="6" class="left mu">Nenhum mês fechado ainda no painel. Até '+compLbl(compAdd(S.base.cutover,-1))+" os dados vêm da planilha.</td></tr>")+"</tbody>";
 }
 $("btnFechar").onclick=async function(){
   var ab=primeiraAberta(S.base);
@@ -927,6 +937,7 @@ $("btnFechar").onclick=async function(){
   });
 };
 $("tbFechados").addEventListener("click",async function(e){
+  var vm=e.target.dataset.ver;if(vm){$("fAno").value=vm.slice(0,4);$("fMes").value=String(+vm.slice(5,7)-1);render();window.scrollTo(0,0);return}
   var c=e.target.dataset.reabrir,xl=e.target.dataset.xl;
   if(xl){exportarExcel([xl]);return}
   if(!c||!confirm("Reabrir "+compLbl(c)+"? Os saldos voltam ao que eram antes do fechamento."))return;
@@ -1023,12 +1034,12 @@ function render(){
   if(!S.base||!S.hist)return;
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("on",t.dataset.tab===(S.aba==="detalhe"?"painel":S.aba))});
   document.querySelectorAll(".view").forEach(function(v){v.hidden=v.id!=="v-"+S.aba});
-  $("fMesWrap").style.display=S.aba==="painel"?"":"none";
+  $("fMesWrap").style.display=(S.aba==="painel"||S.aba==="fechamento")?"":"none";$("fMesLbl").textContent=S.aba==="fechamento"?"Competência":"Mês dos indicadores";
   $("usuario").textContent=Store.usuario();
   if(S.aba==="painel")renderPainel();else if(S.aba==="apolices")renderApolices();else if(S.aba==="pagamentos")renderPagamentos();
   else if(S.aba==="sinistros")renderSinistros();else if(S.aba==="fechamento")renderFechamento();else if(S.aba==="detalhe")renderDetalhe();else renderHistorico();
 }
-document.querySelectorAll(".tab").forEach(function(t){t.onclick=function(){S.aba=t.dataset.tab;render()}});
+document.querySelectorAll(".tab").forEach(function(t){t.onclick=function(){if(t.dataset.tab==="fechamento"&&S.aba!=="fechamento"&&!S.fechMesUsado){var ab=primeiraAberta(S.base);if([].some.call($("fAno").options,function(o){return o.value===ab.slice(0,4)})){$("fAno").value=ab.slice(0,4);$("fMes").value=String(+ab.slice(5,7)-1)}S.fechMesUsado=1}S.aba=t.dataset.tab;render()}});
 ["fAno","fMes","fEmpresa","fRamo","fSeg","fGrupo","aStatus","pComp","pSo"].forEach(function(id){$(id).addEventListener("change",render)});
 $("aBusca").addEventListener("input",function(){renderApolices()});
 $("btnMesAnt").onclick=function(){var m=+$("fMes").value,y=+$("fAno").value;if(m===0){if([].some.call($("fAno").options,function(o){return +o.value===y-1})){$("fAno").value=y-1;$("fMes").value=11}}else $("fMes").value=m-1;render()};
@@ -1095,6 +1106,11 @@ function compararBase(base,ult){
     var fp=futuroDaLinha(l,ult.ano,deFut),fb=futuroDaApolice(p,deFut);
     // parcelas pagas no painel não são sobrescritas: compara só o que está em aberto
     p.parcelas.forEach(function(x){if(x.pago&&x.comp>=deFut&&fp[x.comp])fp[x.comp]-=x.valor});Object.keys(fp).forEach(function(c){if(Math.abs(fp[c])<0.5)delete fp[c]});
+    // meses anteriores ao corte: a planilha é a fonte (parcelas já pagas)
+    var hp={},hb={};l.pg.forEach(function(v,m){var c=comp(ult.ano,m);if(v&&c<base.cutover)hp[c]=(hp[c]||0)+v});
+    p.parcelas.forEach(function(x){if(x.comp<base.cutover)hb[x.comp]=(hb[x.comp]||0)+x.valor});
+    var dh=difFuturo(hb,hp).filter(function(c){return +c.slice(0,4)===ult.ano});
+    if(dh.length)mud.push({campo:"Pagamentos até "+compLbl(compAdd(base.cutover,-1)),de:dh.map(function(c){return compLbl(c)+" "+brl(hb[c]||0)}).join(", "),para:dh.map(function(c){return compLbl(c)+" "+brl(hp[c]||0)}).join(", "),hist:true});
     var dc=difFuturo(fb,fp);
     if(dc.length)mud.push({campo:"Parcelas a pagar",de:dc.map(function(c){return compLbl(c)+" "+brl(fb[c]||0)}).join(", "),para:dc.map(function(c){return compLbl(c)+" "+brl(fp[c]||0)}).join(", "),parc:true});
     if(mud.length)alteradas.push({p:p,l:l,mud:mud});
@@ -1151,6 +1167,9 @@ $("rcAplicar").onclick=async function(){
         p.ativa=norm(l.tipo)==="apolice ativa";
         // apropriação: só acompanha a planilha se a aba for do mesmo mês do último fechamento do painel
         if(ult.comp===ultFech){p.aprop=l.aprop;p.saldo=l.acum}
+        // pagamentos anteriores ao corte seguem a planilha
+        var hNovas=parcelasDaLinha(l,ult.ano,"9999").filter(function(x){return x.comp<base.cutover&&+x.comp.slice(0,4)===ult.ano});hNovas.forEach(function(x){x.pago=true});
+        p.parcelas=p.parcelas.filter(function(x){return !(x.comp<base.cutover&&+x.comp.slice(0,4)===ult.ano)}).concat(hNovas);
         // parcelas a pagar a partir da competência atual: mantém as pagas, substitui as em aberto
         var novas=parcelasDaLinha(l,ult.ano,"0000").filter(function(x){return x.comp>=d.deFut});
         var pagas=p.parcelas.filter(function(x){return x.pago||x.comp<d.deFut});
