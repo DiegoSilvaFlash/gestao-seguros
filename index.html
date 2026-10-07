@@ -61,7 +61,9 @@ select:focus,input:focus{outline:2px solid rgba(247,80,15,.35);border-color:var(
 .kpi.drill::after{content:"ver lista ›";position:absolute;top:12px;right:14px;font-size:11.5px;font-weight:600;color:var(--orange);opacity:.85}
 .voltar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .voltar h2{color:#fff;font-size:18px}.voltar .sb{color:#c9c9ea;font-size:12.5px}
-.t-crit{color:var(--crit)}
+.t-crit{color:var(--crit)!important;font-weight:600}
+td.wrap{white-space:normal;max-width:380px;text-align:left}
+.rch{margin:16px 0 0;color:var(--navy);font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .info{display:inline-flex;width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:10px;align-items:center;justify-content:center;cursor:help}
 .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;white-space:nowrap}
 .badge.good{background:var(--good-bg);color:var(--good)}.badge.warn{background:var(--warn-bg);color:var(--warn)}.badge.crit{background:var(--crit-bg);color:var(--crit)}.badge.neutral{background:var(--surface-2);color:var(--text-2)}
@@ -224,6 +226,7 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
     <img src="data:image/png;base64,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" alt="Flash Courier">
     <div class="tt"><h1>Gestão de Seguros</h1><div class="sb">Apólices, pagamentos, apropriação e sinistros do grupo</div></div>
     <div class="rt"><span><span class="dot" id="connDot"></span><span id="connTxt">—</span></span><span>· <span id="usuario"></span></span>
+      <label class="btn primary sm" style="display:inline-flex;align-items:center" title="Envie a Gestao_de_Seguros.xlsx atualizada para conferir e atualizar o painel">⇪ Atualizar pela planilha<input type="file" id="filePlan" accept=".xlsx,.xlsm" hidden></label>
       <button class="btn ghost sm" id="btnExcelAno" title="Exporta os meses do ano no formato da planilha Gestao_de_Seguros">Exportar Excel</button>
       <button class="btn ghost sm" id="btnCsv">CSV das visões</button></div>
   </div>
@@ -316,7 +319,7 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
   <!-- ===== HISTÓRICO ===== -->
   <section class="view" id="v-historico" hidden>
     <div class="card"><div class="card-h"><div><h2>Histórico da planilha</h2><div class="sub" id="hInfo"></div></div>
-      <label class="btn">Reimportar Gestao_de_Seguros.xlsx<input type="file" id="fileHist" accept=".xlsx,.xlsm" hidden></label></div>
+      <label class="btn">Atualizar pela planilha<input type="file" id="fileHist" accept=".xlsx,.xlsm" hidden></label></div>
       <div class="hsel" id="hSel"></div></div>
     <div class="card"><div class="card-h"><h2>Registro de alterações</h2><span class="sub">Últimas 60 operações da equipe</span></div><div class="tbl-wrap" style="margin-top:0"><table id="tbLog"></table></div></div>
   </section>
@@ -340,6 +343,27 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
   <div class="dlg-f"><button type="button" class="btn danger" id="btnExcluirSin">Excluir</button><span class="sp"></span><button type="button" class="btn" id="btnCancelarSin">Cancelar</button><button type="submit" class="btn primary">Salvar</button></div>
 </form></dialog>
 
+
+<dialog id="dlr" style="width:min(1200px,calc(100vw - 24px))">
+  <div class="dlg-h"><h2>Conferir com a planilha</h2><button type="button" class="btn sm" id="rcFechar">✕</button></div>
+  <div style="padding:14px 18px;max-height:72vh;overflow:auto">
+    <div class="sub" id="rcInfo" style="margin-bottom:10px"></div>
+    <h4 class="rch">1. Totais por mês — painel x planilha</h4>
+    <div class="tbl-wrap" style="margin-top:6px"><table id="rcResumo"></table></div>
+    <h4 class="rch">2. Apólices novas na planilha <span class="badge warn" id="rcNovasQt"></span></h4>
+    <div class="tbl-wrap" style="margin-top:6px;max-height:260px"><table id="rcNovas"></table></div>
+    <h4 class="rch">3. Apólices com diferença <span class="badge warn" id="rcAltQt"></span> <span class="mu" style="font-weight:400">· parcelas comparadas a partir de <span id="rcFut"></span>, sem mexer nas já pagas no painel</span></h4>
+    <div class="tbl-wrap" style="margin-top:6px;max-height:320px"><table id="rcAlt"></table></div>
+    <h4 class="rch">4. Só no painel <span class="badge neutral" id="rcSoQt"></span> <span class="mu" style="font-weight:400">· não serão excluídas</span></h4>
+    <div class="tbl-wrap" style="margin-top:6px;max-height:200px"><table id="rcSo"></table></div>
+  </div>
+  <div class="dlg-f" style="flex-wrap:wrap">
+    <label class="chk"><input type="checkbox" id="rcHist"> <span id="rcHistLbl">Atualizar histórico</span></label>
+    <label class="chk"><input type="checkbox" id="rcNovasChk"> Incluir apólices novas</label>
+    <label class="chk"><input type="checkbox" id="rcAltChk"> Atualizar apólices com diferença (cadastro e parcelas a pagar)</label>
+    <span class="sp"></span><button type="button" class="btn" onclick="document.getElementById('dlr').close()">Só conferir</button><button type="button" class="btn primary" id="rcAplicar">Aplicar no painel</button>
+  </div>
+</dialog>
 <div class="tip" id="tip"></div>
 <div class="toast" id="toast" hidden></div>
 <div class="loading" id="carregando" hidden><div class="card" style="margin:0">Lendo a planilha… alguns segundos.</div></div>
@@ -450,17 +474,24 @@ function lerPlanilha(buf,nomeArq){
   });
   if(!abas.length)throw new Error("Nenhuma aba mensal com a base de apólices foi encontrada.");
   var seq=0;abas.forEach(function(a,i){if(i&&a.mes<abas[i-1].mes)seq++;a.seq=seq});
-  var ult=abas[abas.length-1],cy=+CONFIG.cutover.slice(0,4),cm=+CONFIG.cutover.slice(5,7)-1;
-  var anoUlt=ult.mes<cm?cy:cy-1; // a última aba é anterior ao corte
+  var ult=abas[abas.length-1];
+  var anoUlt=ult.mes<=CUR_M?CUR_Y:CUR_Y-1; // a última aba é a mais recente até hoje
   abas.forEach(function(a){a.ano=anoUlt-(ult.seq-a.seq);a.comp=comp(a.ano,a.mes);delete a.seq});
+  var todas=abas.slice();
   abas=abas.filter(function(a){return a.comp<CONFIG.cutover});
-  return {arquivo:nomeArq,importadoEm:new Date().toISOString(),abas:abas,sinistros:sin,avisos:avisos,cfg:{}};
+  return {arquivo:nomeArq,importadoEm:new Date().toISOString(),abas:abas,todas:todas,sinistros:sin,avisos:avisos,cfg:{}};
 }
 
 /* ================= base inicial a partir da última aba ================= */
 function semearBase(hist,quem){
   var ult=hist.abas[hist.abas.length-1],agora=new Date().toISOString(),ultComp=ult.comp;
-  var apolices=ult.linhas.map(function(l){
+  var apolices=ult.linhas.map(function(l){return linhaParaApolice(l,ult,quem,agora,ultComp)});
+  return {versao:1,cutover:CONFIG.cutover,apolices:apolices,sinistros:(hist.sinistros||[]).slice(),fechamentos:[],log:[{quando:agora,quem:quem,o:"Base criada a partir da aba "+ult.nome+" ("+apolices.length+" linhas)"}]};
+}
+function parcelasDaLinha(l,ano,pagoAte){var out=[];
+  l.pg.forEach(function(v,m){if(v)out.push({id:uid(),comp:comp(ano,m),valor:v,pago:comp(ano,m)<pagoAte,dataPg:""})});
+  if(l.px)l.px.forEach(function(v,m){if(v)out.push({id:uid(),comp:comp(ano+1,m),valor:v,pago:false,dataPg:""})});return out}
+function linhaParaApolice(l,ult,quem,agora,ultComp){
     var p={id:uid(),ativa:norm(l.tipo)==="apolice ativa",emp:l.emp,bu:l.bu,cnpj:l.cnpj,seg:l.seg,ap:l.ap,cor:l.cor,cc:l.cc,ramo:l.ramo,ts:l.ts,
       ini:l.ini,fim:l.fim,cob:l.cob||0,premio:l.premio,is:l.is,st:l.st||"ATIVA",cond:l.cond||0,aprop:l.aprop,saldo:l.acum,apropDe:CONFIG.cutover,ultComp:ultComp,
       canc:l.canc,rest:l.rest,obs:l.obs,parcelas:[],origem:"planilha "+ult.nome,criadoPor:quem,criadoEm:agora,atualizadoPor:quem,atualizadoEm:agora};
@@ -468,12 +499,8 @@ function semearBase(hist,quem){
     // apólice emitida sem apropriação iniciada: começa pela competência do início (retroativa no 1º fechamento)
     if(p.ativa&&!encerrada(p.st)&&!l.aprop&&!l.acum&&p.premio>0&&p.fim&&p.fim>=CONFIG.cutover+"-01"){
       var meses=p.cob||Math.max(1,compDiff(compDe(p.ini),compDe(p.fim)));p.aprop=r2(p.premio/meses);p.saldo=p.premio;p.apropDe=compDe(p.ini)||CONFIG.cutover;p.ultComp=null}
-    var ano=ult.ano;
-    l.pg.forEach(function(v,m){if(v)p.parcelas.push({id:uid(),comp:comp(ano,m),valor:v,pago:comp(ano,m)<CONFIG.cutover,dataPg:""})});
-    if(l.px)l.px.forEach(function(v,m){if(v)p.parcelas.push({id:uid(),comp:comp(ano+1,m),valor:v,pago:false,dataPg:""})});
+    p.parcelas=parcelasDaLinha(l,ult.ano,CONFIG.cutover);
     return p;
-  });
-  return {versao:1,cutover:CONFIG.cutover,apolices:apolices,sinistros:(hist.sinistros||[]).slice(),fechamentos:[],log:[{quando:agora,quem:quem,o:"Base criada a partir da aba "+ult.nome+" ("+apolices.length+" linhas)"}]};
 }
 
 /* ================= motor de apropriação ================= */
@@ -611,7 +638,7 @@ function initFiltros(){
   var lst=Object.keys(anos).map(Number).filter(function(y){return y<=CUR_Y+1}).sort();var cur=$("fAno").value||String(CUR_Y);
   $("fAno").innerHTML=lst.map(function(y){return "<option>"+y+"</option>"}).join("");$("fAno").value=lst.indexOf(+cur)>=0?cur:String(CUR_Y);
   if(!$("fMes").options.length){$("fMes").innerHTML=MESES_L.map(function(m,i){return '<option value="'+i+'">'+m+"</option>"}).join("");$("fMes").value=String(CUR_M)}
-  var emp={},ramo={},seg={};S.base.apolices.concat(S.hist.abas[S.hist.abas.length-1].linhas).forEach(function(l){emp[l.emp]=1;ramo[l.ramo]=1;seg[l.seg]=1});
+  var emp={},ramo={},seg={};S.base.apolices.concat(S.hist.abas.length?S.hist.abas[S.hist.abas.length-1].linhas:[]).forEach(function(l){emp[l.emp]=1;ramo[l.ramo]=1;seg[l.seg]=1});
   fillSel($("fEmpresa"),Object.keys(emp).sort(),"Todas");fillSel($("fRamo"),Object.keys(ramo).sort(),"Todos");fillSel($("fSeg"),Object.keys(seg).sort(),"Todas");
   var dl=$("dlSeg");dl.innerHTML=Object.keys(seg).sort().map(function(s){return '<option value="'+esc(s)+'">'}).join("");
   $("dlEmp").innerHTML=Object.keys(emp).sort().map(function(s){return '<option value="'+esc(s)+'">'}).join("");
@@ -912,12 +939,12 @@ function exportarExcel(comps){
   var wb=XLSX.utils.book_new();
   comps.forEach(function(c){
     var a=abaDe(c),ano=+c.slice(0,4),porId={};S.base.apolices.forEach(function(p){porId[p.id]=p});
-    var hdr=["TIPO","EMPRESA","BU","CNPJ","SEGURADORA","Nº APÓLICE","CORRETORA","CENTRO CUSTO","RAMO","TIPO SEGURO","INI VIG","FIM VIG","COBERTURA","PRÊMIO TOTAL","IMPORTÂNCIA SEGURADA (IS)","Status","APROPRIAÇÃO","ACUMULADO A APROP","CONDIÇÃO DE PGTO"].concat(MESES_N.map(function(m){return m.toUpperCase().replace("MARCO","MARÇO")})).concat(["RESTITUIÇÃO","DATA CANCELAMENTO","OBS"]);
+    var hdr=["TIPO","EMPRESA","BU","CNPJ","SEGURADORA","Nº APÓLICE","CORRETORA","CENTRO CUSTO","RAMO","TIPO SEGURO","INI VIG","FIM VIG","COBERTURA","PRÊMIO TOTAL","IMPORTÂNCIA SEGURADA (IS)","Status","APROPRIAÇÃO","ACUMULADO A APROP","CONDIÇÃO DE PGTO"].concat(MESES_N.map(function(m){return m.toUpperCase().replace("MARCO","MARÇO")})).concat(MESES_N.map(function(m){return m.toUpperCase().replace("MARCO","MARÇO")})).concat(["RESTITUIÇÃO","DATA CANCELAMENTO","OBS"]);
     var rows=[hdr];
     a.linhas.forEach(function(l){var p=porId[l.id],pg=Array(12).fill(0);
-      if(p)p.parcelas.forEach(function(x){if(+x.comp.slice(0,4)===ano)pg[+x.comp.slice(5,7)-1]+=x.valor});else if(l.pg)pg=l.pg.slice();
+      var px=Array(12).fill(0);if(p)p.parcelas.forEach(function(x){var y=+x.comp.slice(0,4);if(y===ano)pg[+x.comp.slice(5,7)-1]+=x.valor;else if(y===ano+1)px[+x.comp.slice(5,7)-1]+=x.valor});else{if(l.pg)pg=l.pg.slice();if(l.px)px=l.px.slice()}
       var dt=function(s){var d=pd(s);return d?{t:"n",v:(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/DAY,z:"dd/mm/yyyy"}:""};
-      rows.push([l.tipo,l.emp,l.bu,l.cnpj,l.seg,l.ap,l.cor,l.cc,l.ramo,l.ts,dt(l.ini),dt(l.fim),l.cob||"",l.premio,l.is||"",l.st,l.aprop||"",l.acum||"",l.cond||""].concat(pg.map(function(v){return v||""})).concat([l.rest||"",dt(l.canc),l.obs||""]))});
+      rows.push([p?(p.ativa?"Apólice Ativa":""):l.tipo,l.emp,l.bu,l.cnpj,l.seg,l.ap,l.cor,l.cc,l.ramo,l.ts,dt(l.ini),dt(l.fim),l.cob||"",l.premio,l.is||"",l.st,l.aprop||"",l.acum||"",l.cond||""].concat(pg.map(function(v){return v||""})).concat(px.map(function(v){return v||""})).concat([l.rest||"",dt(l.canc),l.obs||""]))});
     var ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=hdr.map(function(h,i){return {wch:i===9?40:14}});ws["!autofilter"]={ref:XLSX.utils.encode_range({s:{c:0,r:0},e:{c:hdr.length-1,r:rows.length-1}})};
     XLSX.utils.book_append_sheet(wb,ws,MESES_L[+c.slice(5,7)-1]+(comps.length>12?" "+c.slice(2,4):""));
   });
@@ -931,7 +958,7 @@ $("btnExcelAno").onclick=function(){var ano=+$("fAno").value,lst=[];for(var m=0;
 function renderHistorico(){
   var h=S.hist,cfg=h.cfg||{};
   var dup={};h.abas.forEach(function(a){(dup[a.comp]=dup[a.comp]||[]).push(a)});
-  $("hInfo").innerHTML="Planilha: <b>"+esc(h.arquivo)+"</b> · importada em "+new Date(h.importadoEm).toLocaleString("pt-BR")+" · "+h.abas.length+" abas ("+compLbl(h.abas[0].comp)+" a "+compLbl(h.abas[h.abas.length-1].comp)+"). A partir de <b>"+compLbl(S.base.cutover)+"</b> os lançamentos são feitos no painel.";
+  if(!h.abas.length){$("hInfo").innerHTML="Nenhuma planilha carregada ainda. Use <b>⇪ Atualizar pela planilha</b> para trazer o histórico até "+compLbl(compAdd(S.base.cutover,-1))+".";$("hSel").innerHTML="";}else $("hInfo").innerHTML="Planilha: <b>"+esc(h.arquivo)+"</b> · importada em "+new Date(h.importadoEm).toLocaleString("pt-BR")+" · "+h.abas.length+" abas ("+compLbl(h.abas[0].comp)+" a "+compLbl(h.abas[h.abas.length-1].comp)+"). A partir de <b>"+compLbl(S.base.cutover)+"</b> os lançamentos são feitos no painel.";
   $("hSel").innerHTML=Object.keys(dup).filter(function(k){return dup[k].length>1}).map(function(k){var sel=abaHist(k);return "<label>Apropriação de "+compLbl(k)+' usa a aba<select data-hc="m'+k+'">'+dup[k].map(function(a){return "<option"+(a===sel?" selected":"")+">"+esc(a.nome)+"</option>"}).join("")+"</select></label>"}).join("")||'<span class="mu">Sem abas duplicadas.</span>';
   var log=(S.base.log||[]).slice(-60).reverse();
   $("tbLog").innerHTML='<thead><tr><th class="left">Quando</th><th class="left">Quem</th><th class="left">O quê</th></tr></thead><tbody>'+log.map(function(l){return '<tr><td class="left">'+new Date(l.quando).toLocaleString("pt-BR")+'</td><td class="left">'+esc(l.quem)+'</td><td class="left">'+esc(l.o)+"</td></tr>"}).join("")+"</tbody>";
@@ -1014,24 +1041,29 @@ var rt;addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(rende
 /* ================= início ================= */
 async function iniciar(){
   $("modoLocal").hidden=!MODO_LOCAL;
+  var URL_OFICIAL="https://diegosilvaflash.github.io/gestao-seguros/";
+  if(!MODO_LOCAL&&location.hostname!=="diegosilvaflash.github.io"){$("gate").hidden=false;$("btnLogin").hidden=true;
+    $("gateMsg").innerHTML='Este arquivo não funciona aberto pelo SharePoint ou Teams.<br>Use o endereço oficial:<br><a class="btn primary" style="display:inline-block;margin-top:12px;text-decoration:none" href="'+URL_OFICIAL+'" target="_blank" rel="noopener">Abrir Gestão de Seguros</a>';return}
   try{
     var logado=await Store.iniciar();
     if(!logado){$("gate").hidden=false;$("gateMsg").textContent="Entre com sua conta Microsoft da Flash Courier para acessar.";$("btnLogin").hidden=false;return}
     $("gate").hidden=false;$("gateMsg").textContent="Conectando ao SharePoint…";$("btnLogin").hidden=true;
     await Store.conectar();
-    var h=null;try{var rh=await Store.ler(CONFIG.fileHist);h=rh&&rh.dados}catch(e){console.warn(e)}
-    S.hist=h||histEmbutido();if(!S.hist){S.hist=await pedirPlanilha();if(!MODO_LOCAL){$("gateMsg").textContent="Salvando o histórico no SharePoint…";await Store.gravar(CONFIG.fileHist,S.hist,null)}}
+    var rh=await Store.ler(CONFIG.fileHist),h=rh&&rh.dados;
+    // sem histórico: abre o painel vazio; o histórico entra pelo botão "Atualizar pela planilha"
+    S.hist=h||histEmbutido()||{arquivo:"—",importadoEm:new Date().toISOString(),abas:[],sinistros:[],avisos:[],cfg:{}};
     var rb=await Store.ler(CONFIG.fileBase);
     if(rb){S.base=rb.dados;S.eTag=rb.eTag}
     else{
-      $("gateMsg").textContent="Criando a base do painel a partir da aba "+S.hist.abas[S.hist.abas.length-1].nome+"…";
-      var base=semearBase(S.hist,Store.usuario());
+      $("gateMsg").textContent="Criando a base do painel…";
+      var base=S.hist.abas.length?semearBase(S.hist,Store.usuario()):{versao:1,cutover:CONFIG.cutover,apolices:[],sinistros:[],fechamentos:[],log:[{quando:new Date().toISOString(),quem:Store.usuario(),o:"Base criada vazia (aguardando a planilha)"}]};
       try{S.eTag=await Store.gravar(CONFIG.fileBase,base,null);S.base=base}
       catch(e){if(e.status===412||e.status===409){var r2_=await Store.ler(CONFIG.fileBase);S.base=r2_.dados;S.eTag=r2_.eTag}else throw e}
-      if(!MODO_LOCAL&&!h){try{await Store.gravar(CONFIG.fileHist,S.hist,null)}catch(e){console.warn(e)}}
+      if(!MODO_LOCAL&&!h&&S.hist.abas.length){try{await Store.gravar(CONFIG.fileHist,S.hist,null)}catch(e){console.warn(e)}}
     }
     $("gate").hidden=true;$("app").hidden=false;setConn(true,MODO_LOCAL?"Modo local":"Sincronizado");
     $("pComp").value=comp(CUR_Y,CUR_M);
+    if(!S.hist.abas.length&&!S.base.apolices.length)setTimeout(function(){toast("Painel vazio: clique em ⇪ Atualizar pela planilha para carregar a Gestao_de_Seguros.xlsx")},600);
     initFiltros();render();
     if(!MODO_LOCAL)setInterval(function(){if(!S.ocupado&&!document.querySelector("dialog[open]"))recarregar(true)},60000);
   }catch(e){console.error(e);$("gate").hidden=false;$("gateMsg").textContent="Não foi possível carregar: "+e.message;$("btnLogin").hidden=MODO_LOCAL}
@@ -1043,6 +1075,97 @@ function pedirPlanilha(){return new Promise(function(ok){
   $("gateFile").onchange=function(e){var f=e.target.files[0];if(!f)return;$("gateMsg").textContent="Lendo a planilha…";var r=new FileReader();
     r.onload=function(){setTimeout(function(){try{var h=lerPlanilha(new Uint8Array(r.result),f.name);$("gateFileWrap").hidden=true;ok(h)}catch(x){$("gateMsg").textContent="Não consegui ler: "+x.message}},30)};r.readAsArrayBuffer(f)}})}
 iniciar();
+
+/* ================= conferir / atualizar pela planilha ================= */
+var REC=null; // {plan, ult, diff}
+function chaveAp(l){return norm(l.ap)+"|"+norm(l.ramo)+"|"+norm(l.emp)}
+function indexar(lista){var cont={},m={};lista.forEach(function(x){var k=chaveAp(x);cont[k]=(cont[k]||0)+1;m[k+"#"+cont[k]]=x});return m}
+var CAMPOS_CMP=[["seg","Seguradora"],["cor","Corretora"],["ts","Tipo de seguro"],["ini","Início","d"],["fim","Fim","d"],["premio","Prêmio","m"],["is","IS","m"],["st","Status"],["cond","Cond. pgto"],["canc","Data canc.","d"],["rest","Restituição","m"],["ativaTxt","Tipo"]];
+function valCmp(x,k){if(k==="ativaTxt")return x.ativa!=null?(x.ativa?"Apólice Ativa":"—"):(norm(x.tipo)==="apolice ativa"?"Apólice Ativa":"—");var v=x[k];return v==null?"":v}
+function fmtCmp(v,t){return t==="m"?brl2(+v||0):t==="d"?fmtD(v):String(v||"—")}
+function futuroDaLinha(l,ano,de){var o={};l.pg.forEach(function(v,m){var c=comp(ano,m);if(v&&c>=de)o[c]=(o[c]||0)+v});if(l.px)l.px.forEach(function(v,m){var c=comp(ano+1,m);if(v&&c>=de)o[c]=(o[c]||0)+v});return o}
+function futuroDaApolice(p,de){var o={};p.parcelas.forEach(function(x){if(x.comp>=de&&!x.pago)o[x.comp]=(o[x.comp]||0)+x.valor});return o}
+function difFuturo(a,b){var ks={};Object.keys(a).concat(Object.keys(b)).forEach(function(k){ks[k]=1});return Object.keys(ks).sort().filter(function(k){return Math.abs((a[k]||0)-(b[k]||0))>0.5})}
+function compararBase(base,ult){
+  var deFut=comp(CUR_Y,CUR_M)>base.cutover?comp(CUR_Y,CUR_M):base.cutover;
+  var mP=indexar(ult.linhas),mB=indexar(base.apolices),novas=[],alteradas=[],soPainel=[];
+  Object.keys(mP).forEach(function(k){var l=mP[k],p=mB[k];
+    if(!p){novas.push(l);return}
+    var mud=[];CAMPOS_CMP.forEach(function(f){var a=valCmp(p,f[0]),b=valCmp(l,f[0]);if(f[2]==="m"?Math.abs((+a||0)-(+b||0))>0.5:String(a).trim()!==String(b).trim())mud.push({campo:f[1],de:fmtCmp(a,f[2]),para:fmtCmp(b,f[2])})});
+    var fp=futuroDaLinha(l,ult.ano,deFut),fb=futuroDaApolice(p,deFut);
+    // parcelas pagas no painel não são sobrescritas: compara só o que está em aberto
+    p.parcelas.forEach(function(x){if(x.pago&&x.comp>=deFut&&fp[x.comp])fp[x.comp]-=x.valor});Object.keys(fp).forEach(function(c){if(Math.abs(fp[c])<0.5)delete fp[c]});
+    var dc=difFuturo(fb,fp);
+    if(dc.length)mud.push({campo:"Parcelas a pagar",de:dc.map(function(c){return compLbl(c)+" "+brl(fb[c]||0)}).join(", "),para:dc.map(function(c){return compLbl(c)+" "+brl(fp[c]||0)}).join(", "),parc:true});
+    if(mud.length)alteradas.push({p:p,l:l,mud:mud});
+  });
+  Object.keys(mB).forEach(function(k){if(!mP[k])soPainel.push(mB[k])});
+  return {novas:novas,alteradas:alteradas,soPainel:soPainel,deFut:deFut};
+}
+function resumoMensal(plan,ano){
+  var ult=plan.todas.filter(function(a){return a.ano===ano}).slice(-1)[0];
+  var pP=caixaAno(ano,function(){return true}).pago.map(function(x){return x.real+x.prev});
+  var pS=Array(12).fill(0);if(ult)ult.linhas.forEach(function(l){l.pg.forEach(function(v,m){pS[m]+=v})});
+  var aP=[],aS=[];for(var m=0;m<12;m++){var c=comp(ano,m),a=abaDe(c);aP.push(a.linhas.reduce(function(t,l){return t+(l.aprop||0)},0));
+    var lst=plan.todas.filter(function(x){return x.comp===c}),k=(S.hist.cfg||{})["m"+c],ab=lst.find(function(x){return x.nome===k})||lst[lst.length-1];
+    aS.push(ab?ab.linhas.reduce(function(t,l){return t+(l.aprop||0)},0):null)}
+  return {pP:pP,pS:pS,aP:aP,aS:aS,ultNome:ult?ult.nome:"—"};
+}
+function abrirConferencia(plan){
+  var ult=plan.todas[plan.todas.length-1],d=compararBase(S.base,ult);REC={plan:plan,ult:ult,diff:d};
+  var ano=+$("fAno").value||CUR_Y,r=resumoMensal(plan,ano);
+  function linha(lbl,arr,cls){return '<tr class="'+(cls||"")+'"><td>'+lbl+"</td>"+arr.map(function(v){return "<td>"+(v==null?'<span class="mu">sem aba</span>':Math.abs(v)<.5?"–":brl(v))+"</td>"}).join("")+"<td><b>"+brl(arr.reduce(function(t,v){return t+(v||0)},0))+"</b></td></tr>"}
+  function dif(a,b){return a.map(function(v,i){return b[i]==null?null:v-b[i]})}
+  function linhaDif(lbl,arr){return '<tr class="tot"><td>'+lbl+"</td>"+arr.map(function(v){return '<td class="'+(v!=null&&Math.abs(v)>=1?"t-crit":"")+'">'+(v==null?"":Math.abs(v)<1?"✓":brl(v))+"</td>"}).join("")+"<td></td></tr>"}
+  var cab="<thead><tr><th>"+ano+"</th>"+MESES.map(function(m){return "<th>"+m+"</th>"}).join("")+"<th>Total</th></tr></thead>";
+  $("rcResumo").innerHTML=cab+"<tbody>"+linha("Pago · painel",r.pP)+linha("Pago · planilha ("+esc(r.ultNome)+")",r.pS)+linhaDif("Diferença",dif(r.pP,r.pS))+
+    linha("Apropriado · painel",r.aP)+linha("Apropriado · planilha",r.aS)+linhaDif("Diferença",dif(r.aP,r.aS))+"</tbody>";
+  $("rcInfo").innerHTML="Planilha <b>"+esc(plan.arquivo)+"</b> · "+plan.todas.length+" abas ("+compLbl(plan.todas[0].comp)+" a "+compLbl(ult.comp)+") · aba usada para as apólices: <b>"+esc(ult.nome)+"</b> ("+ult.linhas.length+" linhas)"+(plan.avisos.length?'<div class="mu">'+plan.avisos.map(esc).join("<br>")+"</div>":"");
+  $("rcNovasQt").textContent=d.novas.length;$("rcAltQt").textContent=d.alteradas.length;$("rcSoQt").textContent=d.soPainel.length;
+  $("rcNovas").innerHTML='<thead><tr><th>Nº apólice</th><th class="left">Empresa</th><th class="left">Ramo</th><th class="left">Seguradora</th><th>Início</th><th>Fim</th><th>Prêmio</th><th class="left">Status</th></tr></thead><tbody>'+(d.novas.length?d.novas.slice(0,400).map(function(l){return "<tr><td>"+esc(l.ap)+'</td><td class="left">'+esc(l.emp)+'</td><td class="left">'+esc(l.ramo)+'</td><td class="left">'+esc(l.seg)+"</td><td>"+fmtD(l.ini)+"</td><td>"+fmtD(l.fim)+"</td><td>"+brl2(l.premio)+'</td><td class="left">'+esc(l.st)+"</td></tr>"}).join(""):'<tr><td colspan="8" class="left mu">Nenhuma apólice nova na planilha.</td></tr>')+"</tbody>";
+  $("rcAlt").innerHTML='<thead><tr><th>Nº apólice</th><th class="left">Ramo / Empresa</th><th class="left">Campo</th><th class="left">No painel</th><th class="left">Na planilha</th></tr></thead><tbody>'+(d.alteradas.length?d.alteradas.slice(0,400).map(function(a){return a.mud.map(function(m,i){return "<tr>"+(i===0?'<td rowspan="'+a.mud.length+'">'+esc(a.p.ap)+'</td><td class="left" rowspan="'+a.mud.length+'">'+esc(a.p.ramo)+" · "+esc(a.p.emp)+"</td>":"")+'<td class="left">'+m.campo+'</td><td class="left wrap">'+esc(m.de)+'</td><td class="left wrap"><b>'+esc(m.para)+"</b></td></tr>"}).join("")}).join(""):'<tr><td colspan="5" class="left mu">Nenhuma diferença nas apólices em comum.</td></tr>')+"</tbody>";
+  $("rcSo").innerHTML='<thead><tr><th>Nº apólice</th><th class="left">Empresa</th><th class="left">Ramo</th><th class="left">Seguradora</th><th class="left">Origem</th></tr></thead><tbody>'+(d.soPainel.length?d.soPainel.slice(0,400).map(function(p){return "<tr><td>"+esc(p.ap)+'</td><td class="left">'+esc(p.emp)+'</td><td class="left">'+esc(p.ramo)+'</td><td class="left">'+esc(p.seg)+'</td><td class="left">'+esc(p.origem||"")+"</td></tr>"}).join(""):'<tr><td colspan="5" class="left mu">Todas as apólices do painel estão na planilha.</td></tr>')+"</tbody>";
+  $("rcFut").textContent=compLbl(d.deFut);
+  $("rcHist").checked=true;$("rcHistLbl").textContent="Atualizar histórico (abas até "+compLbl(compAdd(S.base.cutover,-1))+")";$("rcNovasChk").checked=d.novas.length>0;$("rcAltChk").checked=d.alteradas.length>0;
+  $("dlr").showModal();
+}
+function lerArquivoPlanilha(f,cb){$("carregando").hidden=false;var r=new FileReader();
+  r.onload=function(){setTimeout(function(){try{cb(lerPlanilha(new Uint8Array(r.result),f.name))}catch(x){console.error(x);alert("Não consegui ler a planilha: "+x.message)}finally{$("carregando").hidden=true}},30)};r.readAsArrayBuffer(f)}
+$("filePlan").onchange=function(e){var f=e.target.files[0];e.target.value="";if(f)lerArquivoPlanilha(f,abrirConferencia)};
+$("fileHist").onchange=$("filePlan").onchange;
+$("rcFechar").onclick=function(){$("dlr").close()};
+$("rcAplicar").onclick=async function(){
+  if(!REC)return;var plan=REC.plan,ult=REC.ult,optH=$("rcHist").checked,optN=$("rcNovasChk").checked,optA=$("rcAltChk").checked;
+  if(!optH&&!optN&&!optA){alert("Marque o que deseja atualizar.");return}
+  $("dlr").close();
+  if(optH){var h={arquivo:plan.arquivo,importadoEm:plan.importadoEm,abas:plan.abas,sinistros:plan.sinistros,avisos:plan.avisos,cfg:S.hist.cfg||{}};
+    try{if(!MODO_LOCAL){var v=await Store.versao(CONFIG.fileHist);await Store.gravar(CONFIG.fileHist,h,v)}S.hist=h;S.rev=(S.rev||0)+1;toast("Histórico atualizado","ok")}
+    catch(x){console.error(x);alert("Não foi possível salvar o histórico: "+x.message);return}}
+  if(optN||optA){var quem=Store.usuario(),agora=new Date().toISOString(),nN=0,nA=0,nS=0;
+    await operar("Atualização pela planilha "+plan.arquivo,function(base){
+      var d=compararBase(base,ult),ultFech=base.fechamentos.length?base.fechamentos[base.fechamentos.length-1].comp:compAdd(base.cutover,-1);
+      if(optN)d.novas.forEach(function(l){var p=linhaParaApolice(l,ult,quem,agora,ult.comp);p.parcelas=parcelasDaLinha(l,ult.ano,d.deFut);
+        p.parcelas.forEach(function(x){if(x.comp<d.deFut)x.pago=true});p.origem="planilha "+ult.nome+" (atualização)";base.apolices.push(p);nN++});
+      if(optA)d.alteradas.forEach(function(a){var p=base.apolices.find(function(x){return x.id===a.p.id});if(!p)return;var l=a.l;
+        ["seg","cor","ts","ini","fim","premio","is","st","cond","canc","rest","cob","bu","cnpj","cc","obs"].forEach(function(k){if(l[k]!==undefined&&l[k]!==""&&l[k]!==null)p[k]=l[k]});
+        p.ativa=norm(l.tipo)==="apolice ativa";
+        // apropriação: só acompanha a planilha se a aba for do mesmo mês do último fechamento do painel
+        if(ult.comp===ultFech){p.aprop=l.aprop;p.saldo=l.acum}
+        // parcelas a pagar a partir da competência atual: mantém as pagas, substitui as em aberto
+        var novas=parcelasDaLinha(l,ult.ano,"0000").filter(function(x){return x.comp>=d.deFut});
+        var pagas=p.parcelas.filter(function(x){return x.pago||x.comp<d.deFut});
+        novas.forEach(function(x){var jaPago=pagas.filter(function(y){return y.comp===x.comp&&y.pago}).reduce(function(t,y){return t+y.valor},0);x.valor=r2(x.valor-jaPago);x.pago=false});
+        p.parcelas=pagas.concat(novas.filter(function(x){return Math.abs(x.valor)>=0.5}));
+        p.atualizadoPor=quem;p.atualizadoEm=agora;nA++});
+      // sinistros da planilha que ainda não estão no painel
+      base.sinistros=base.sinistros||[];var ks={};base.sinistros.forEach(function(s){ks[norm(s.emp)+"|"+norm(s.ap)+"|"+Math.round(s.valor||0)+"|"+s.data]=1});
+      (plan.sinistros||[]).forEach(function(s){var k=norm(s.emp)+"|"+norm(s.ap)+"|"+Math.round(s.valor||0)+"|"+s.data;if(!ks[k]){base.sinistros.push(Object.assign({},s,{id:uid()}));ks[k]=1;nS++}});
+      if(!nN&&!nA&&!optH)return false;
+    });
+    toast(nN+" apólices incluídas · "+nA+" atualizadas"+(nS?" · "+nS+" sinistros":""),"ok");
+  }
+  initFiltros();render();
+};
 
 window.__lerPlanilha=lerPlanilha;
 })();
