@@ -247,7 +247,7 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
     <label>Empresa<select id="fEmpresa"></select></label>
     <label>Ramo<select id="fRamo"></select></label>
     <label>Seguradora<select id="fSeg"></select></label>
-    <label>Agrupar tabelas por<select id="fGrupo"><option value="ramo">Ramo</option><option value="empresa">Empresa</option><option value="seguradora">Seguradora</option><option value="apolice">Apólice</option></select></label>
+    <label id="fGrupoWrap" title="Escolha um ramo para ver as apólices dele nos gráficos e tabelas de pago e apropriado">Visões por ramo<select id="fGrupo"></select></label>
   </div>
 
   <!-- ===== PAINEL ===== -->
@@ -259,12 +259,12 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
       <div class="card"><div class="card-h"><div class="sub" id="concResumo"></div><div class="sub">Participação no prêmio das apólices ativas</div></div><div class="conc" id="conc"></div></div></div>
 
     <div class="card">
-      <div class="card-h"><div><h2>Valores pagos mensalmente</h2><div class="sub">Regime de caixa · parcelas por competência de vencimento · clique num mês para filtrar os indicadores</div></div>
+      <div class="card-h"><div><h2>Valores pagos mensalmente<span id="visTit1"></span></h2><div class="sub">Regime de caixa · parcelas por competência de vencimento · clique num mês para filtrar os indicadores</div></div>
         <div class="legend"><span><i style="background:var(--navy)"></i>Pago</span><span><i style="background-image:repeating-linear-gradient(45deg,var(--navy) 0 2px,transparent 2px 5px);border:1px solid var(--navy)"></i>A pagar</span></div></div>
       <div class="chart" id="chPago"></div><div class="tbl-wrap"><table id="tbPago"></table></div>
     </div>
     <div class="card">
-      <div class="card-h"><div><h2>Valores apropriados mensalmente</h2><div class="sub">Regime de competência · até Set/2026 pela planilha, depois pelos fechamentos do painel</div></div>
+      <div class="card-h"><div><h2>Valores apropriados mensalmente<span id="visTit2"></span></h2><div class="sub">Regime de competência · até Set/2026 pela planilha, depois pelos fechamentos do painel</div></div>
         <div class="legend"><span><i style="background:var(--orange)"></i>Apropriado (fechado)</span><span><i style="background-image:repeating-linear-gradient(45deg,var(--orange) 0 2px,transparent 2px 5px);border:1px solid var(--orange)"></i>Em aberto / projeção</span></div></div>
       <div class="chart" id="chAprop"></div><div class="tbl-wrap"><table id="tbAprop"></table></div>
     </div>
@@ -639,7 +639,7 @@ function initFiltros(){
   $("fAno").innerHTML=lst.map(function(y){return "<option>"+y+"</option>"}).join("");$("fAno").value=lst.indexOf(+cur)>=0?cur:String(CUR_Y);
   if(!$("fMes").options.length){$("fMes").innerHTML=MESES_L.map(function(m,i){return '<option value="'+i+'">'+m+"</option>"}).join("");$("fMes").value=String(CUR_M)}
   var emp={},ramo={},seg={};S.base.apolices.concat(S.hist.abas.length?S.hist.abas[S.hist.abas.length-1].linhas:[]).forEach(function(l){emp[l.emp]=1;ramo[l.ramo]=1;seg[l.seg]=1});
-  fillSel($("fEmpresa"),Object.keys(emp).sort(),"Todas");fillSel($("fRamo"),Object.keys(ramo).sort(),"Todos");fillSel($("fSeg"),Object.keys(seg).sort(),"Todas");
+  fillSel($("fEmpresa"),Object.keys(emp).sort(),"Todas");fillSel($("fGrupo"),Object.keys(ramo).sort(),"Todos os ramos");fillSel($("fRamo"),Object.keys(ramo).sort(),"Todos");fillSel($("fSeg"),Object.keys(seg).sort(),"Todas");
   var dl=$("dlSeg");dl.innerHTML=Object.keys(seg).sort().map(function(s){return '<option value="'+esc(s)+'">'}).join("");
   $("dlEmp").innerHTML=Object.keys(emp).sort().map(function(s){return '<option value="'+esc(s)+'">'}).join("");
   $("dlRamo").innerHTML=Object.keys(ramo).sort().map(function(s){return '<option value="'+esc(s)+'">'}).join("");
@@ -649,28 +649,29 @@ function initFiltros(){
 /* ================= caixa (pagamentos) ================= */
 function caixaAno(ano,F){
   // 2026 em diante: parcelas da base (com status pago). Antes: colunas da última aba do ano na planilha.
-  var cy=+S.base.cutover.slice(0,4)-0,pago=[],lp={},chave=chaveGrupo();
-  for(var m=0;m<12;m++)pago.push({real:0,prev:0});
+  var cy=+S.base.cutover.slice(0,4)-0,pago=[],pagoT=[],lp={},chave=chaveGrupo();
+  for(var m=0;m<12;m++){pago.push({real:0,prev:0});pagoT.push({real:0,prev:0})}
   var usaBase=ano>=+S.base.cutover.slice(0,4)||S.base.apolices.some(function(p){return p.parcelas.some(function(x){return +x.comp.slice(0,4)===ano})});
   if(usaBase){
     S.base.apolices.filter(F).forEach(function(p){p.parcelas.forEach(function(x){if(+x.comp.slice(0,4)!==ano||!x.valor)return;var m=+x.comp.slice(5,7)-1,k=chave(p);
-      (lp[k]=lp[k]||Array(12).fill(0))[m]+=x.valor;if(x.pago)pago[m].real+=x.valor;else pago[m].prev+=x.valor})});
+      if(x.pago)pago[m].real+=x.valor;else pago[m].prev+=x.valor;if(k===null)return;(lp[k]=lp[k]||Array(12).fill(0))[m]+=x.valor;if(x.pago)pagoT[m].real+=x.valor;else pagoT[m].prev+=x.valor})});
   }else{
     var lst=S.hist.abas.filter(function(a){return a.ano===ano}),a=lst[lst.length-1];
-    if(a)a.linhas.filter(F).forEach(function(l){var k=chave(l);l.pg.forEach(function(v,m){if(!v)return;(lp[k]=lp[k]||Array(12).fill(0))[m]+=v;pago[m].real+=v})});
+    if(a)a.linhas.filter(F).forEach(function(l){var k=chave(l);l.pg.forEach(function(v,m){if(!v)return;pago[m].real+=v;if(k===null)return;(lp[k]=lp[k]||Array(12).fill(0))[m]+=v;pagoT[m].real+=v})});
   }
-  return {pago:pago,lp:lp};
+  return {pago:pago,pagoT:pagoT,lp:lp};
 }
-function chaveGrupo(){var g=$("fGrupo").value;return function(l){return g==="apolice"?(l.ap||"s/ nº")+" · "+l.ramo+" · "+l.emp:g==="ramo"?l.ramo:g==="empresa"?l.emp:l.seg}}
+// "Visões por ramo": todos os ramos (linhas = ramo) ou um ramo da planilha (linhas = apólices desse ramo)
+function chaveGrupo(){var g=$("fGrupo").value;return function(l){return !g?l.ramo:(l.ramo===g?(l.ap||"s/ nº")+" · "+l.seg+" · "+l.emp:null)}}
 
 /* ================= cálculo do painel ================= */
 function calcular(){
   var ano=+$("fAno").value,mes=+$("fMes").value,cM=comp(ano,mes),F=filtro(),chave=chaveGrupo();
   var cx=caixaAno(ano,F);
-  var aprop=[],la={},fontes=[];
-  for(var m=0;m<12;m++){var c=comp(ano,m),a=abaDe(c),tot=0;
-    a.linhas.filter(F).forEach(function(l){if(!l.aprop)return;var k=chave(l);(la[k]=la[k]||Array(12).fill(0))[m]+=l.aprop;tot+=l.aprop});
-    var real=a.fonte==="planilha"||a.fonte==="fechado";aprop.push({real:real?tot:0,prev:real?0:tot});fontes.push(a);}
+  var aprop=[],aprT=[],la={},fontes=[];
+  for(var m=0;m<12;m++){var c=comp(ano,m),a=abaDe(c),tot=0,totT=0;
+    a.linhas.filter(F).forEach(function(l){if(!l.aprop)return;tot+=l.aprop;var k=chave(l);if(k===null)return;(la[k]=la[k]||Array(12).fill(0))[m]+=l.aprop;totT+=l.aprop});
+    var real=a.fonte==="planilha"||a.fonte==="fechado";aprop.push({real:real?tot:0,prev:real?0:tot});aprT.push({real:real?totT:0,prev:real?0:totT});fontes.push(a);}
   var A0=abaDe(cM),B=A0.linhas.filter(F),At=B.filter(function(l){return ativa(l,A0)});
   var ref=cM===comp(CUR_Y,CUR_M)?HOJE:fimDoMes(cM);
   function venc(dd){var lim=new Date(ref.getTime()+dd*DAY);return At.filter(function(l){var f=pd(l.fim);return f&&f>=ref&&f<=lim})}
@@ -683,7 +684,7 @@ function calcular(){
   var aPagarResto=0;for(i=mes+1;i<12;i++)aPagarResto+=cx.pago[i].prev+cx.pago[i].real;
   var apAte=0;for(i=0;i<=mes;i++)apAte+=aprop[i].real+aprop[i].prev;
   var apAno=aprop.reduce(function(t,x){return t+x.real+x.prev},0);
-  return {ano:ano,mes:mes,cM:cM,aba:A0,cx:cx,aprop:aprop,la:la,fontes:fontes,ativas:At,base:B,premA:premA,isA:isA,taxa:isA?premIS/isA:NaN,
+  return {ano:ano,mes:mes,cM:cM,aba:A0,cx:cx,aprop:aprop,aprT:aprT,la:la,fontes:fontes,ativas:At,base:B,premA:premA,isA:isA,taxa:isA?premIS/isA:NaN,
     saldo:B.reduce(function(t,l){return t+(l.acum||0)},0),apMes:B.reduce(function(t,l){return t+(l.aprop||0)},0),apAnt:apAnt,Aant:Aant,
     v30:venc(30),v90:venc(90),canc:B.filter(function(l){return /CANCEL/.test(l.st)}),rest:B.reduce(function(t,l){return t+(l.rest||0)},0),
     porSeg:porSeg,segRamo:segRamo,pagoAte:pagoAte,aPagarAte:aPagarAte,aPagarResto:aPagarResto,apAte:apAte,apAno:apAno,sin:sin,sinValor:sin.reduce(function(t,s){return t+(s.valor||0)},0)};
@@ -771,10 +772,10 @@ function renderRenov(c){
 }
 function renderPainel(){
   var c=calcular();S.ultimo=c;renderKPIs(c);
-  renderBars($("chPago"),c.cx.pago,"var(--navy)","Pago","A pagar",c.ano,c.mes);
-  renderBars($("chAprop"),c.aprop,"var(--orange)","Apropriado (fechado)","Em aberto / projeção",c.ano,c.mes,c.fontes);
-  var rot={apolice:"Apólice",ramo:"Ramo",empresa:"Empresa",seguradora:"Seguradora"}[$("fGrupo").value];
-  renderTabela($("tbPago"),c.cx.lp,function(i){return c.cx.pago[i].prev>0&&c.cx.pago[i].real===0},rot,c.mes);
+  renderBars($("chPago"),c.cx.pagoT,"var(--navy)","Pago","A pagar",c.ano,c.mes);
+  renderBars($("chAprop"),c.aprT,"var(--orange)","Apropriado (fechado)","Em aberto / projeção",c.ano,c.mes,c.fontes);
+  var g=$("fGrupo").value,rot=g?"Apólice · "+g:"Ramo";$("visTit1").textContent=$("visTit2").textContent=g?" · "+g:"";
+  renderTabela($("tbPago"),c.cx.lp,function(i){return c.cx.pagoT[i].prev>0&&c.cx.pagoT[i].real===0},rot,c.mes);
   renderTabela($("tbAprop"),c.la,function(i){return !(c.fontes[i].fonte==="planilha"||c.fontes[i].fonte==="fechado")},rot,c.mes);
   renderRenov(c);
 }
@@ -1034,7 +1035,7 @@ function render(){
   if(!S.base||!S.hist)return;
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("on",t.dataset.tab===(S.aba==="detalhe"?"painel":S.aba))});
   document.querySelectorAll(".view").forEach(function(v){v.hidden=v.id!=="v-"+S.aba});
-  $("fMesWrap").style.display=(S.aba==="painel"||S.aba==="fechamento")?"":"none";$("fMesLbl").textContent=S.aba==="fechamento"?"Competência":"Mês dos indicadores";
+  $("fMesWrap").style.display=(S.aba==="painel"||S.aba==="fechamento")?"":"none";$("fGrupoWrap").style.display=S.aba==="painel"?"":"none";$("fMesLbl").textContent=S.aba==="fechamento"?"Competência":"Mês dos indicadores";
   $("usuario").textContent=Store.usuario();
   if(S.aba==="painel")renderPainel();else if(S.aba==="apolices")renderApolices();else if(S.aba==="pagamentos")renderPagamentos();
   else if(S.aba==="sinistros")renderSinistros();else if(S.aba==="fechamento")renderFechamento();else if(S.aba==="detalhe")renderDetalhe();else renderHistorico();
