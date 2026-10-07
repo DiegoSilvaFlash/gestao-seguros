@@ -287,7 +287,7 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
   <section class="view" id="v-apolices" hidden>
     <div class="card">
       <div class="card-h"><div><h2>Apólices</h2><div class="sub" id="qtApol"></div></div>
-        <div class="toolbar"><input id="aBusca" placeholder="Buscar nº, seguradora, tipo, CNPJ…" style="min-width:240px"><select id="aStatus"><option value="ativas">Só ativas</option><option value="todas">Todas</option><option value="encerradas">Canceladas/finalizadas</option></select><button class="btn primary" id="btnNovaApol">+ Nova apólice</button></div></div>
+        <div class="toolbar"><input id="aBusca" placeholder="Buscar nº, seguradora, tipo, CNPJ…" style="min-width:240px"><select id="aTipo" title="Coluna TIPO da planilha"><option value="">Todas as linhas</option><option value="ativa">Só “Apólice Ativa”</option><option value="outras">Sem “Apólice Ativa”</option></select><select id="aStatus"></select><button class="btn primary" id="btnNovaApol">+ Nova apólice</button></div></div>
       <div class="tbl-wrap" style="margin-top:0"><table id="tbApol"></table></div>
     </div>
   </section>
@@ -782,16 +782,23 @@ function renderPainel(){
 
 /* ================= aba Apólices ================= */
 function renderApolices(){
-  var q=norm($("aBusca").value),F=filtro(),st=$("aStatus").value;
+  var q=norm($("aBusca").value),F=filtro(),st=$("aStatus").value,tp=$("aTipo").value;
+  // contagem por status (todas as linhas da base, como na planilha)
+  var cont={};S.base.apolices.filter(F).forEach(function(p){var k=p.st||"(sem status)";cont[k]=(cont[k]||0)+1});
+  var ks=Object.keys(cont).sort(function(a,b){return cont[b]-cont[a]}),cur=st;
+  $("aStatus").innerHTML='<option value="">Todos os status</option>'+ks.map(function(k){return '<option value="'+esc(k)+'">'+esc(k)+" ("+cont[k]+")</option>"}).join("");$("aStatus").value=ks.indexOf(cur)>=0?cur:"";st=$("aStatus").value;
   var lst=S.base.apolices.filter(F).filter(function(p){
-    if(st==="ativas"&&!(p.ativa&&!encerrada(p.st)))return false;if(st==="encerradas"&&!encerrada(p.st))return false;
-    return !q||norm([p.ap,p.emp,p.ramo,p.ts,p.seg,p.cor,p.st,p.cnpj].join(" ")).indexOf(q)>=0});
-  lst.sort(function(a,b){return (b.atualizadoEm||"").localeCompare(a.atualizadoEm||"")||(a.fim||"").localeCompare(b.fim||"")});
-  var show=lst.slice(0,400);
-  var h='<thead><tr><th>Nº apólice</th><th class="left">Empresa</th><th class="left">Ramo</th><th class="left">Tipo de seguro</th><th class="left">Seguradora</th><th>Início</th><th>Fim</th><th>Prêmio total</th><th>Aprop./mês</th><th>Saldo a aprop.</th><th>Parcelas</th><th class="left">Status</th><th></th></tr></thead><tbody>';
-  show.forEach(function(p){var pg=p.parcelas.filter(function(x){return x.pago}).length,b=/CANCEL/.test(p.st)?"crit":/FINALIZ/.test(p.st)?"neutral":/ATIV/.test(p.st)?"good":"warn";
-    h+="<tr><td>"+esc(p.ap||"—")+'</td><td class="left">'+esc(p.emp)+'</td><td class="left">'+esc(p.ramo)+'</td><td class="left trunc" title="'+esc(p.ts)+'">'+esc(p.ts)+'</td><td class="left">'+esc(p.seg)+"</td><td>"+fmtD(p.ini)+"</td><td>"+fmtD(p.fim)+"</td><td>"+brl(p.premio)+"</td><td>"+(p.aprop?brl(p.aprop):"–")+"</td><td>"+(p.saldo?brl(p.saldo):"–")+"</td><td>"+pg+"/"+p.parcelas.length+'</td><td class="left"><span class="badge '+b+'">'+esc(p.st||"—")+(p.ativa?"":" · inativa")+'</span></td><td><button class="btn sm" data-ed="'+p.id+'">Editar</button> <button class="btn sm danger" data-del="'+p.id+'">Excluir</button></td></tr>'});
-  $("tbApol").innerHTML=h+"</tbody>";$("qtApol").textContent=num(lst.length)+" linhas"+(lst.length>show.length?" (mostrando "+show.length+")":"");
+    if(st&&(p.st||"(sem status)")!==st)return false;
+    if(tp==="ativa"&&!p.ativa)return false;if(tp==="outras"&&p.ativa)return false;
+    return !q||norm([p.ap,p.emp,p.bu,p.ramo,p.ts,p.seg,p.cor,p.st,p.cnpj,p.cc,p.obs].join(" ")).indexOf(q)>=0});
+  var tot=lst.reduce(function(t,p){return t+(p.premio||0)},0);
+  var h='<thead><tr><th>#</th><th class="left">Tipo</th><th class="left">Empresa</th><th class="left">BU</th><th class="left">CNPJ</th><th class="left">Seguradora</th><th class="left">Nº apólice</th><th class="left">Corretora</th><th class="left">Centro custo</th><th class="left">Ramo</th><th class="left">Tipo de seguro</th><th>Ini vig</th><th>Fim vig</th><th>Cobertura</th><th>Prêmio total</th><th>IS</th><th class="left">Status</th><th>Apropriação</th><th>Acum. a aprop.</th><th>Cond. pgto</th><th>Parcelas pagas</th><th>Restituição</th><th>Data canc.</th><th class="left">Obs.</th><th></th></tr></thead><tbody>';
+  if(!lst.length)h+='<tr><td colspan="25" class="left mu">Nenhuma apólice para os filtros.</td></tr>';
+  lst.forEach(function(p,i){var pg=p.parcelas.filter(function(x){return x.pago}).length,b=/CANCEL/.test(p.st)?"crit":/FINALIZ/.test(p.st)?"neutral":/ATIV/.test(p.st)?"good":"warn";
+    h+="<tr><td>"+(i+1)+'</td><td class="left">'+(p.ativa?"Apólice Ativa":"")+'</td><td class="left">'+esc(p.emp)+'</td><td class="left">'+esc(p.bu)+'</td><td class="left">'+esc(p.cnpj)+'</td><td class="left">'+esc(p.seg)+'</td><td class="left">'+esc(p.ap||"—")+'</td><td class="left">'+esc(p.cor)+'</td><td class="left">'+esc(p.cc)+'</td><td class="left">'+esc(p.ramo)+'</td><td class="left trunc" title="'+esc(p.ts)+'">'+esc(p.ts)+"</td><td>"+fmtD(p.ini)+"</td><td>"+fmtD(p.fim)+"</td><td>"+(p.cob||"–")+"</td><td>"+brl2(p.premio)+"</td><td>"+(p.is?brl(p.is):"–")+'</td><td class="left"><span class="badge '+b+'">'+esc(p.st||"—")+"</span></td><td>"+(p.aprop?brl2(p.aprop):"–")+"</td><td>"+(p.saldo?brl2(p.saldo):"–")+"</td><td>"+(p.cond||"–")+"</td><td>"+pg+"/"+p.parcelas.length+"</td><td>"+(p.rest?brl2(p.rest):"–")+"</td><td>"+fmtD(p.canc)+'</td><td class="left trunc" title="'+esc(p.obs)+'">'+esc(p.obs)+'</td><td><button class="btn sm" data-ed="'+p.id+'">Editar</button> <button class="btn sm danger" data-del="'+p.id+'">Excluir</button></td></tr>'});
+  if(lst.length)h+='<tr class="tot"><td colspan="14">Total ('+num(lst.length)+" linhas)</td><td>"+brl2(tot)+'</td><td colspan="10"></td></tr>';
+  $("tbApol").innerHTML=h+"</tbody>";
+  $("qtApol").innerHTML=num(lst.length)+" de "+num(S.base.apolices.length)+" linhas da base (mesmas linhas da planilha + incluídas no painel) · prêmio "+brl(tot)+' · <span class="mu">os indicadores do Painel continuam usando só as apólices ativas</span>';
 }
 $("tbApol").addEventListener("click",async function(e){var id=e.target.dataset.ed,del=e.target.dataset.del;
   if(id)abrirApolice(S.base.apolices.find(function(p){return p.id===id}));
@@ -1041,7 +1048,7 @@ function render(){
   else if(S.aba==="sinistros")renderSinistros();else if(S.aba==="fechamento")renderFechamento();else if(S.aba==="detalhe")renderDetalhe();else renderHistorico();
 }
 document.querySelectorAll(".tab").forEach(function(t){t.onclick=function(){if(t.dataset.tab==="fechamento"&&S.aba!=="fechamento"&&!S.fechMesUsado){var ab=primeiraAberta(S.base);if([].some.call($("fAno").options,function(o){return o.value===ab.slice(0,4)})){$("fAno").value=ab.slice(0,4);$("fMes").value=String(+ab.slice(5,7)-1)}S.fechMesUsado=1}S.aba=t.dataset.tab;render()}});
-["fAno","fMes","fEmpresa","fRamo","fSeg","fGrupo","aStatus","pComp","pSo"].forEach(function(id){$(id).addEventListener("change",render)});
+["fAno","fMes","fEmpresa","fRamo","fSeg","fGrupo","aStatus","aTipo","pComp","pSo"].forEach(function(id){$(id).addEventListener("change",render)});
 $("aBusca").addEventListener("input",function(){renderApolices()});
 $("btnMesAnt").onclick=function(){var m=+$("fMes").value,y=+$("fAno").value;if(m===0){if([].some.call($("fAno").options,function(o){return +o.value===y-1})){$("fAno").value=y-1;$("fMes").value=11}}else $("fMes").value=m-1;render()};
 $("btnMesProx").onclick=function(){var m=+$("fMes").value,y=+$("fAno").value;if(m===11){if([].some.call($("fAno").options,function(o){return +o.value===y+1})){$("fAno").value=y+1;$("fMes").value=0}}else $("fMes").value=m+1;render()};
