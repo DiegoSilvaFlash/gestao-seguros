@@ -110,6 +110,7 @@ dialog::backdrop{background:rgba(10,10,60,.55)}
 .gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
 .gate .box{background:#fff;border-radius:16px;padding:32px 28px;max-width:420px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 .gate img{height:44px;background:var(--navy);padding:10px 16px;border-radius:10px}
+#dlgAviso:empty{display:none}
 .banner{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:12.5px;margin-bottom:12px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:200;font-size:13px}
 .toast.ok{border-left:4px solid #4cd27a}
@@ -331,6 +332,7 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
 <dialog id="dlg"><form id="dlgForm">
   <div class="dlg-h"><h2 id="dlgTit">Apólice</h2><button type="button" class="btn sm" onclick="document.getElementById('dlg').close()">✕</button></div>
   <div class="form" id="dlgCampos"></div>
+  <div id="dlgAviso" class="banner" style="margin:0 18px 10px" ></div>
   <div class="parc"><h4>Parcelas (pagamentos)</h4>
     <div class="toolbar" style="margin-bottom:8px"><label class="fl">1ª parcela<input type="month" id="parc1"></label><button type="button" class="btn sm" id="btnGerarParc">Gerar parcelas pela condição de pagamento</button><button type="button" class="btn sm" id="btnAddParc">+ Parcela</button><span class="mu" id="parcTot"></span></div>
     <div id="parcLista"></div></div>
@@ -520,7 +522,7 @@ function simular(base,ate){ // retorna {comp: {id:{v,saldo}}} das competências 
 }
 function linhaDeApolice(p,c,v,saldo){
   var fimM=fimDoMes(c),iniM=pd(c+"-01");
-  var vig=p.ativa&&!encerrada(p.st)&&(!p.fim||pd(p.fim)>=iniM);
+  var vig=p.ativa&&!encerrada(p.st)&&(!p.fim||pd(p.fim)>=iniM)&&(!p.ini||pd(p.ini)<=fimM);
   return {id:p.id,ap:p.ap,emp:p.emp,ramo:p.ramo,seg:p.seg,cor:p.cor,tipo:vig?"Apólice Ativa":"",ts:p.ts,bu:p.bu,cnpj:p.cnpj,cc:p.cc,obs:p.obs,ini:p.ini,fim:p.fim,cob:p.cob,
     premio:p.premio,is:p.is,st:p.st,aprop:v,acum:saldo,cond:p.cond,rest:p.rest,canc:p.canc};
 }
@@ -623,7 +625,12 @@ function abaHist(c){
 function abaDe(c){ // {nome, comp, fonte:'planilha'|'fechado'|'aberto'|'projecao'|'sem', linhas, temTipo}
   if(c<S.base.cutover){var a=abaHist(c);return a?{nome:"Planilha · "+a.nome,comp:c,fonte:"planilha",linhas:a.linhas,temTipo:a.temTipo}:{nome:"sem aba",comp:c,fonte:"sem",linhas:[],temTipo:true}}
   var f=S.base.fechamentos.find(function(x){return x.comp===c});
-  if(f)return {nome:"Fechamento "+compLbl(c),comp:c,fonte:"fechado",linhas:f.linhas,temTipo:true};
+  if(f){ // mês fechado: apropriação congelada no fechamento; carteira (status, prêmio, vigência…) sempre atual
+    var snap={};f.linhas.forEach(function(l){if(l.id)snap[l.id]=l});
+    var vivas=S.base.apolices.map(function(p){var s=snap[p.id];return linhaDeApolice(p,c,s?s.aprop||0:0,s?s.acum:p.saldo)});
+    var ids={};S.base.apolices.forEach(function(p){ids[p.id]=1});
+    f.linhas.forEach(function(l){if(l.aprop&&!(l.id&&ids[l.id]))vivas.push(Object.assign({},l,{tipo:""}))}); // excluídas depois do fechamento: mantém o valor apropriado
+    return {nome:"Fechamento "+compLbl(c),comp:c,fonte:"fechado",linhas:vivas,temTipo:true};}
   var ab=primeiraAberta(S.base),r=sim(c)[c]||{};
   var linhas=S.base.apolices.map(function(p){var x=r[p.id]||{v:0,saldo:p.saldo};return linhaDeApolice(p,c,x.v,x.saldo)});
   return {nome:c===ab?"Em aberto "+compLbl(c):"Projeção "+compLbl(c),comp:c,fonte:c===ab?"aberto":"projecao",linhas:linhas,temTipo:true};
@@ -825,7 +832,7 @@ function abrirApolice(p){
     if(f[2].indexOf("list:")===0)return "<label>"+f[1]+'<input name="'+f[0]+'" list="'+f[2].slice(5)+'" value="'+esc(v)+'"'+req+"></label>";
     return "<label>"+f[1]+'<input name="'+f[0]+'" type="'+f[2]+'"'+(f[2]==="number"?' step="any"':"")+' value="'+esc(v)+'"'+req+"></label>";
   }).join("")+(novo?"":'<div class="meta mu">Criada por '+esc(p.criadoPor||"—")+" em "+(p.criadoEm?new Date(p.criadoEm).toLocaleString("pt-BR"):"—")+" · última alteração: "+esc(p.atualizadoPor||"—")+" em "+(p.atualizadoEm?new Date(p.atualizadoEm).toLocaleString("pt-BR"):"—")+(p.origem?" · origem: "+esc(p.origem):"")+"</div>");
-  $("btnExcluir").hidden=novo;renderParcelasEdit();$("dlg").showModal();
+  $("dlgAviso").textContent="";$("btnExcluir").hidden=novo;renderParcelasEdit();$("dlg").showModal();
 }
 function lerForm(){var fd=new FormData($("dlgForm")),o={};fd.forEach(function(v,k){o[k]=v});o.ativa=!!$("dlgForm").querySelector('[name=ativa]').checked;
   ["cob","premio","is","cond","aprop","saldo","rest"].forEach(function(k){o[k]=r2(xNum(String(o[k]||"").replace(",",".")))});
@@ -835,6 +842,9 @@ $("dlgForm").addEventListener("input",function(e){
   var pr=xNum(f.premio.value),cob=xNum(f.cob.value);
   if(!cob&&f.ini.value&&f.fim.value){cob=Math.max(1,compDiff(compDe(f.ini.value),compDe(f.fim.value)));f.cob.value=cob}
   if(EDIT&&!EDIT.id&&pr&&cob){f.aprop.value=r2(pr/cob);f.saldo.value=pr;if(f.ini.value&&!f.apropDe.value)f.apropDe.value=compDe(f.ini.value)}
+  if(EDIT&&EDIT.id&&n==="premio"&&pr){var d=r2(pr-(EDIT.premio||0)),ab=primeiraAberta(S.base),fimC=compDe(f.fim.value)||ab,rest=Math.max(1,compDiff(ab,fimC));
+    var s=r2(Math.max(0,(EDIT.saldo||0)+d));f.saldo.value=s;f.aprop.value=r2(s/rest);
+    $("dlgAviso").textContent="Prêmio alterado em "+brl2(d)+": saldo a apropriar recalculado para "+brl2(s)+" e apropriação mensal para "+brl2(s/rest)+" ("+rest+" meses restantes a partir de "+compLbl(ab)+"). Ajuste se precisar.";}
 });
 function renderParcelasEdit(){
   var ps=EDIT.parcelas.slice().sort(function(a,b){return a.comp.localeCompare(b.comp)});
@@ -853,12 +863,18 @@ $("btnGerarParc").onclick=function(){var o=lerForm(),n=Math.max(1,o.cond||1),c0=
 $("dlgForm").addEventListener("submit",async function(e){
   e.preventDefault();var o=lerForm(),id=EDIT.id,parc=EDIT.parcelas,quem=Store.usuario(),agora=new Date().toISOString();
   if(o.fim&&o.ini&&o.fim<o.ini){alert("Fim de vigência anterior ao início.");return}
+  var avisos=[];
+  if(!parc.length&&o.premio>0){var n=Math.max(1,o.cond||1),c0=$("parc1").value||compDe(o.ini)||comp(CUR_Y,CUR_M),b=r2(o.premio/n);parc=[];
+    for(var k=0;k<n;k++)parc.push({id:uid(),comp:compAdd(c0,k),valor:k===n-1?r2(o.premio-b*(n-1)):b,pago:false,dataPg:""});avisos.push(n+" parcela(s) gerada(s) a partir de "+compLbl(c0))}
+  if(!id&&o.premio>0&&!o.aprop){var cb=o.cob||Math.max(1,compDiff(compDe(o.ini),compDe(o.fim)));o.aprop=r2(o.premio/cb);o.saldo=o.premio;o.cob=o.cob||cb}
+  var ab=primeiraAberta(S.base),de=o.apropDe||compDe(o.ini);if(!id&&de&&de<ab)avisos.push("Início em "+compLbl(de)+", que já está fechado: a apropriação desse período entra como retroativa em "+compLbl(ab)+". Para contar no próprio mês, reabra o fechamento.");
   $("dlg").close();
   await operar(id?"Apólice "+(o.ap||"")+" alterada":"Apólice "+(o.ap||"")+" incluída",function(base){
     if(id){var p=base.apolices.find(function(x){return x.id===id});if(!p){alert("Esta apólice foi excluída por outra pessoa.");return false}
       Object.assign(p,o,{parcelas:parc,atualizadoPor:quem,atualizadoEm:agora});if(!p.apropDe)p.apropDe=compDe(p.ini)||base.cutover}
     else base.apolices.push(Object.assign({id:uid(),ultComp:null,origem:"painel",criadoPor:quem,criadoEm:agora,atualizadoPor:quem,atualizadoEm:agora},o,{apropDe:o.apropDe||compDe(o.ini)||base.cutover,parcelas:parc}));
   });
+  if(avisos.length)setTimeout(function(){alert(avisos.join("\n\n"))},300);
 });
 $("btnExcluir").onclick=async function(){var id=EDIT.id;if(!confirm("Excluir esta apólice? Para histórico, prefira mudar o status para CANCELADA ou FINALIZADA."))return;$("dlg").close();
   await operar("Apólice excluída",function(base){base.apolices=base.apolices.filter(function(p){return p.id!==id})})};
@@ -921,7 +937,7 @@ function renderFechamento(){
     '<div><div class="mu">'+(estado==="aberto"||estado==="futuro"?"Apropriação prevista":"Apropriação do mês")+'</div><div class="big">'+brl2(tot)+'</div><div class="mu">'+lin.length+" apólices"+(retro.length?" · "+retro.length+" com apropriação retroativa":"")+(f?" · fechado por "+esc(f.por)+" em "+new Date(f.em).toLocaleDateString("pt-BR"):"")+"</div></div>"+
     '<div><div class="mu">Parcelas do mês</div><div class="big">'+parc.length+'</div><div class="mu">Pagas '+brl2(pPg.reduce(function(t,x){return t+x.valor},0))+" · em aberto "+brl2(pAb.reduce(function(t,x){return t+x.valor},0))+"</div></div></div>"+
     (estado==="futuro"?'<div class="note mu" style="margin-top:8px">Para fechar '+compLbl(c)+", feche antes "+compLbl(ab)+".</div>":estado==="planilha"?'<div class="note mu" style="margin-top:8px">Meses até '+compLbl(compAdd(S.base.cutover,-1))+" vêm da planilha (aba "+esc(a.nome.replace("Planilha · ",""))+").</div>":"");
-  $("btnFechar").textContent="Fechar "+compLbl(ab);$("btnFechar").hidden=estado!=="aberto";
+  $("btnFechar").textContent="Fechar "+compLbl(ab);$("btnFechar").hidden=estado!=="aberto"||c>comp(CUR_Y,CUR_M);if(estado==="aberto"&&c>comp(CUR_Y,CUR_M))$("fResumo").insertAdjacentHTML("beforeend",'<div class="note mu" style="margin-top:8px">'+compLbl(c)+" ainda não começou: o fechamento fica disponível a partir do próprio mês.</div>");
   var vis=lin.filter(function(x){return F(x.l)}).sort(function(a,b){return b.v-a.v});
   var h='<thead><tr><th>Nº apólice</th><th class="left">Empresa</th><th class="left">Ramo</th><th class="left">Seguradora</th><th>Aprop./mês</th><th>'+(estado==="aberto"||estado==="futuro"?"Apropriar em ":"Apropriado em ")+compLbl(c)+'</th><th>Saldo após</th><th class="left">Obs.</th></tr></thead><tbody>';
   if(!vis.length)h+='<tr><td colspan="8" class="left mu">Sem apropriação neste mês para os filtros selecionados.</td></tr>';
@@ -933,7 +949,7 @@ function renderFechamento(){
 }
 $("btnFechar").onclick=async function(){
   var ab=primeiraAberta(S.base);
-  if(ab>comp(CUR_Y,CUR_M)&&!confirm(compLbl(ab)+" ainda não começou. Fechar mesmo assim?"))return;
+  if(ab>comp(CUR_Y,CUR_M)){alert(compLbl(ab)+" ainda não começou. O fechamento só pode ser feito a partir do próprio mês.");return}
   if(!confirm("Fechar "+compLbl(ab)+"? A apropriação do mês fica registrada e os saldos das apólices são atualizados."))return;
   var quem=Store.usuario();
   await operar("Fechamento de "+compLbl(ab),function(base){
