@@ -231,6 +231,7 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
       <button class="btn ghost sm" id="btnExcelAno" title="Exporta os meses do ano no formato da planilha Gestao_de_Seguros">Exportar Excel</button>
       <button class="btn ghost sm" id="btnCsv">CSV das visões</button></div>
   </div>
+  <div class="banner" id="avisoFech" hidden style="background:var(--crit-bg);color:var(--crit)"></div>
   <div class="banner" id="modoLocal" hidden>Modo local de teste: os dados ficam só neste navegador. Para a equipe, use o endereço publicado (login Microsoft + SharePoint).</div>
 
   <nav class="tabs">
@@ -288,7 +289,7 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
   <section class="view" id="v-apolices" hidden>
     <div class="card">
       <div class="card-h"><div><h2>Apólices</h2><div class="sub" id="qtApol"></div></div>
-        <div class="toolbar"><input id="aBusca" placeholder="Buscar nº, seguradora, tipo, CNPJ…" style="min-width:240px"><select id="aTipo" title="Coluna TIPO da planilha"><option value="">Todas as linhas</option><option value="ativa">Só “Apólice Ativa”</option><option value="outras">Sem “Apólice Ativa”</option></select><select id="aStatus"></select><button class="btn primary" id="btnNovaApol">+ Nova apólice</button></div></div>
+        <div class="toolbar"><input id="aBusca" placeholder="Buscar nº, seguradora, tipo, CNPJ…" style="min-width:240px"><select id="aTipo" title="Coluna TIPO da planilha"><option value="">Todas as linhas</option><option value="ativa">Só “Apólice Ativa”</option><option value="outras">Sem “Apólice Ativa”</option></select><select id="aStatus"></select><button class="btn" id="btnDup" hidden style="color:var(--crit);border-color:var(--crit)"></button><button class="btn primary" id="btnNovaApol">+ Nova apólice</button></div></div>
       <div class="tbl-wrap" style="margin-top:0"><table id="tbApol"></table></div>
     </div>
   </section>
@@ -366,6 +367,9 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
     <span class="sp"></span><button type="button" class="btn" onclick="document.getElementById('dlr').close()">Só conferir</button><button type="button" class="btn primary" id="rcAplicar">Aplicar no painel</button>
   </div>
 </dialog>
+<dialog id="dlgDup" style="width:min(1000px,calc(100vw - 24px))"><div class="dlg-h"><h2>Possíveis apólices duplicadas</h2><button type="button" class="btn sm" onclick="document.getElementById('dlgDup').close()">✕</button></div>
+<div style="padding:14px 18px;max-height:65vh;overflow:auto"><p class="mu" style="margin-top:0">Mesmo nº, ramo, empresa, prêmio e vigência. Duplicadas contam duas vezes no prêmio e na apropriação. Escolha qual manter em cada grupo (sugestão: a alterada mais recentemente).</p><div id="dupLista"></div></div>
+<div class="dlg-f"><span class="sp"></span><button type="button" class="btn" onclick="document.getElementById('dlgDup').close()">Cancelar</button><button type="button" class="btn primary" id="dupAplicar">Excluir as não marcadas</button></div></dialog>
 <div class="tip" id="tip"></div>
 <div class="toast" id="toast" hidden></div>
 <div class="loading" id="carregando" hidden><div class="card" style="margin:0">Lendo a planilha… alguns segundos.</div></div>
@@ -804,7 +808,7 @@ function renderApolices(){
   lst.forEach(function(p,i){var pg=p.parcelas.filter(function(x){return x.pago}).length,b=/CANCEL/.test(p.st)?"crit":/FINALIZ/.test(p.st)?"neutral":/ATIV/.test(p.st)?"good":"warn";
     h+="<tr><td>"+(i+1)+'</td><td class="left">'+(p.ativa?"Apólice Ativa":"")+'</td><td class="left">'+esc(p.emp)+'</td><td class="left">'+esc(p.bu)+'</td><td class="left">'+esc(p.cnpj)+'</td><td class="left">'+esc(p.seg)+'</td><td class="left">'+esc(p.ap||"—")+'</td><td class="left">'+esc(p.cor)+'</td><td class="left">'+esc(p.cc)+'</td><td class="left">'+esc(p.ramo)+'</td><td class="left trunc" title="'+esc(p.ts)+'">'+esc(p.ts)+"</td><td>"+fmtD(p.ini)+"</td><td>"+fmtD(p.fim)+"</td><td>"+(p.cob||"–")+"</td><td>"+brl2(p.premio)+"</td><td>"+(p.is?brl(p.is):"–")+'</td><td class="left"><span class="badge '+b+'">'+esc(p.st||"—")+"</span></td><td>"+(p.aprop?brl2(p.aprop):"–")+"</td><td>"+(p.saldo?brl2(p.saldo):"–")+"</td><td>"+(p.cond||"–")+"</td><td>"+pg+"/"+p.parcelas.length+"</td><td>"+(p.rest?brl2(p.rest):"–")+"</td><td>"+fmtD(p.canc)+'</td><td class="left trunc" title="'+esc(p.obs)+'">'+esc(p.obs)+'</td><td><button class="btn sm" data-ed="'+p.id+'">Editar</button> <button class="btn sm danger" data-del="'+p.id+'">Excluir</button></td></tr>'});
   if(lst.length)h+='<tr class="tot"><td colspan="14">Total ('+num(lst.length)+" linhas)</td><td>"+brl2(tot)+'</td><td colspan="10"></td></tr>';
-  $("tbApol").innerHTML=h+"</tbody>";
+  $("tbApol").innerHTML=h+"</tbody>";renderDup();
   $("qtApol").innerHTML=num(lst.length)+" de "+num(S.base.apolices.length)+" linhas da base (mesmas linhas da planilha + incluídas no painel) · prêmio "+brl(tot)+' · <span class="mu">os indicadores do Painel continuam usando só as apólices ativas</span>';
 }
 $("tbApol").addEventListener("click",async function(e){var id=e.target.dataset.ed,del=e.target.dataset.del;
@@ -812,6 +816,19 @@ $("tbApol").addEventListener("click",async function(e){var id=e.target.dataset.e
   if(del){var p=S.base.apolices.find(function(x){return x.id===del});if(!p)return;
     if(!confirm("Excluir a apólice "+(p.ap||"sem nº")+" ("+p.seg+" · "+p.ramo+" · "+p.emp+")?\n\nEla sai da base e das próximas apropriações. Meses já fechados não mudam.\nPara manter histórico, prefira editar e mudar o status para CANCELADA ou FINALIZADA."))return;
     await operar("Apólice "+(p.ap||"")+" excluída",function(base){var n=base.apolices.length;base.apolices=base.apolices.filter(function(x){return x.id!==del});return base.apolices.length<n?undefined:false})}});
+
+/* ---------- possíveis duplicadas ---------- */
+function gruposDuplicados(base){var g={};base.apolices.forEach(function(p){if(!(p.premio>0))return;var k=[norm(p.ap),norm(p.ramo),norm(p.emp),r2(p.premio),p.ini,p.fim].join("|");(g[k]=g[k]||[]).push(p)});
+  return Object.keys(g).filter(function(k){return g[k].length>1}).map(function(k){return g[k].slice().sort(function(a,b){return (b.atualizadoEm||"").localeCompare(a.atualizadoEm||"")})})}
+function renderDup(){var gs=gruposDuplicados(S.base);$("btnDup").hidden=!gs.length;$("btnDup").textContent="⚠ Possíveis duplicadas ("+gs.length+")"}
+$("btnDup").onclick=function(){var gs=gruposDuplicados(S.base);
+  $("dupLista").innerHTML=gs.map(function(g,i){return '<div class="card" style="margin:0 0 10px;padding:10px 12px;box-shadow:none;border:1px solid var(--border)"><b>'+esc(g[0].ap)+" · "+esc(g[0].ramo)+" · "+esc(g[0].emp)+"</b> · prêmio "+brl2(g[0].premio)+" · "+fmtD(g[0].ini)+" a "+fmtD(g[0].fim)+
+    '<table style="margin-top:6px"><thead><tr><th class="left">Manter</th><th class="left">Origem</th><th class="left">Tipo</th><th>Aprop./mês</th><th>Saldo</th><th class="left">Última alteração</th></tr></thead><tbody>'+
+    g.map(function(p,j){return '<tr><td class="left"><input type="radio" name="dup'+i+'" value="'+p.id+'"'+(j===0?" checked":"")+'></td><td class="left">'+esc(p.origem||"")+'</td><td class="left">'+(p.ativa?"Apólice Ativa":"—")+"</td><td>"+brl2(p.aprop)+"</td><td>"+brl2(p.saldo)+'</td><td class="left">'+esc(p.atualizadoPor||"")+" "+(p.atualizadoEm?new Date(p.atualizadoEm).toLocaleString("pt-BR"):"")+"</td></tr>"}).join("")+"</tbody></table></div>"}).join("");
+  $("dlgDup").showModal()};
+$("dupAplicar").onclick=async function(){var gs=gruposDuplicados(S.base),rm=[];gs.forEach(function(g,i){var keep=(document.querySelector('input[name=dup'+i+']:checked')||{}).value;g.forEach(function(p){if(p.id!==keep)rm.push(p.id)})});
+  if(!rm.length){$("dlgDup").close();return}if(!confirm("Excluir "+rm.length+" linha(s) duplicada(s)?"))return;$("dlgDup").close();
+  await operar(rm.length+" apólice(s) duplicada(s) excluída(s)",function(base){base.apolices=base.apolices.filter(function(p){return rm.indexOf(p.id)<0})})};
 
 /* ---------- formulário de apólice ---------- */
 var CAMPOS=[
@@ -867,7 +884,7 @@ $("dlgForm").addEventListener("submit",async function(e){
   if(!parc.length&&o.premio>0){var n=Math.max(1,o.cond||1),c0=$("parc1").value||compDe(o.ini)||comp(CUR_Y,CUR_M),b=r2(o.premio/n);parc=[];
     for(var k=0;k<n;k++)parc.push({id:uid(),comp:compAdd(c0,k),valor:k===n-1?r2(o.premio-b*(n-1)):b,pago:false,dataPg:""});avisos.push(n+" parcela(s) gerada(s) a partir de "+compLbl(c0))}
   if(!id&&o.premio>0&&!o.aprop){var cb=o.cob||Math.max(1,compDiff(compDe(o.ini),compDe(o.fim)));o.aprop=r2(o.premio/cb);o.saldo=o.premio;o.cob=o.cob||cb}
-  var ab=primeiraAberta(S.base),de=o.apropDe||compDe(o.ini);if(!id&&de&&de<ab)avisos.push("Início em "+compLbl(de)+", que já está fechado: a apropriação desse período entra como retroativa em "+compLbl(ab)+". Para contar no próprio mês, reabra o fechamento.");
+  var ab=primeiraAberta(S.base),de=o.apropDe||compDe(o.ini);if(id&&S.base.fechamentos.length){var ant=EDIT;if(ant&&(r2(ant.aprop||0)!==r2(o.aprop||0)||r2(ant.saldo||0)!==r2(o.saldo||0)||r2(ant.premio||0)!==r2(o.premio||0)))avisos.push("A alteração de apropriação vale a partir de "+compLbl(ab)+", que é o primeiro mês em aberto. Meses fechados não mudam; para corrigir um mês fechado, reabra o fechamento.")}if(!id&&de&&de<ab)avisos.push("Início em "+compLbl(de)+", que já está fechado: a apropriação desse período entra como retroativa em "+compLbl(ab)+". Para contar no próprio mês, reabra o fechamento.");
   $("dlg").close();
   await operar(id?"Apólice "+(o.ap||"")+" alterada":"Apólice "+(o.ap||"")+" incluída",function(base){
     if(id){var p=base.apolices.find(function(x){return x.id===id});if(!p){alert("Esta apólice foi excluída por outra pessoa.");return false}
@@ -966,7 +983,11 @@ $("tbFechados").addEventListener("click",async function(e){
   if(xl){exportarExcel([xl]);return}
   if(!c||!confirm("Reabrir "+compLbl(c)+"? Os saldos voltam ao que eram antes do fechamento."))return;
   await operar("Reabertura de "+compLbl(c),function(base){var f=base.fechamentos[base.fechamentos.length-1];if(!f||f.comp!==c)return false;
-    f.linhas.forEach(function(l){var p=base.apolices.find(function(x){return x.id===l.id});if(p&&l.aprop){p.saldo=l.prevSaldo;p.ultComp=l.prevUlt}});base.fechamentos.pop()});
+    // devolve ao saldo o que foi apropriado no mês (preserva correções feitas depois do fechamento)
+    var snap={};f.linhas.forEach(function(l){if(l.id)snap[l.id]=l});
+    base.apolices.forEach(function(p){if(p.ultComp!==c)return;var s=snap[p.id],v=s?(s.aprop||0):(p.aprop||0);
+      p.saldo=r2((p.saldo||0)+v);var ant=compAdd(c,-1);p.ultComp=s&&s.prevUlt!==undefined?s.prevUlt:(p.apropDe&&p.apropDe>ant?null:ant)});
+    base.fechamentos.pop()});
 });
 
 /* ================= exportar Excel no formato da planilha ================= */
@@ -1056,6 +1077,8 @@ $("dCsv").onclick=function(){var r=linhasDrill(),cols=r.D.cols.filter(function(x
 /* ================= render / navegação ================= */
 function render(){
   if(!S.base||!S.hist)return;
+  var ab0=primeiraAberta(S.base),fut=S.base.fechamentos.filter(function(f){return f.comp>comp(CUR_Y,CUR_M)});
+  $("avisoFech").hidden=!fut.length;if(fut.length)$("avisoFech").innerHTML="⚠ "+fut.map(function(f){return compLbl(f.comp)}).join(", ")+" já está fechado antes de o mês começar. Novas apólices e correções só entram a partir de <b>"+compLbl(ab0)+"</b>. Em <b>Fechamento mensal</b>, reabra a partir do último mês fechado.";
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("on",t.dataset.tab===(S.aba==="detalhe"?"painel":S.aba))});
   document.querySelectorAll(".view").forEach(function(v){v.hidden=v.id!=="v-"+S.aba});
   $("fMesWrap").style.display=(S.aba==="painel"||S.aba==="fechamento")?"":"none";$("fGrupoWrap").style.display=S.aba==="painel"?"":"none";$("fMesLbl").textContent=S.aba==="fechamento"?"Competência":"Mês dos indicadores";
@@ -1114,6 +1137,20 @@ iniciar();
 /* ================= conferir / atualizar pela planilha ================= */
 var REC=null; // {plan, ult, diff}
 function chaveAp(l){return norm(l.ap)+"|"+norm(l.ramo)+"|"+norm(l.emp)}
+// pareia linhas da planilha com apólices do painel: mesmo nº+ramo+empresa; dentro do grupo, primeiro prêmio+vigência iguais, depois vigência, depois a ordem
+function parear(linhas,apolices){
+  var gP={},gB={},mP={},mB={},n=0;
+  linhas.forEach(function(l){(gP[chaveAp(l)]=gP[chaveAp(l)]||[]).push(l)});
+  apolices.forEach(function(p){(gB[chaveAp(p)]=gB[chaveAp(p)]||[]).push(p)});
+  Object.keys(gP).forEach(function(k){var ls=gP[k].slice(),bs=(gB[k]||[]).slice();
+    [function(l,p){return Math.abs((l.premio||0)-(p.premio||0))<0.5&&l.ini===p.ini&&l.fim===p.fim},function(l,p){return l.ini===p.ini&&l.fim===p.fim},function(){return true}].forEach(function(cond){
+      ls.slice().forEach(function(l){var i=bs.findIndex(function(p){return cond(l,p)});if(i<0)return;var p=bs.splice(i,1)[0];ls.splice(ls.indexOf(l),1);n++;mP["m"+n]=l;mB["m"+n]=p})});
+    ls.forEach(function(l){n++;mP["p"+n]=l})});
+  Object.keys(gB).forEach(function(k){if(!gP[k])gB[k].forEach(function(p){n++;mB["b"+n]=p})});
+  // sobras do painel dentro de grupos que existem na planilha
+  var usados=new Set(Object.keys(mB).map(function(k){return mB[k]}));apolices.forEach(function(p){if(!usados.has(p)){n++;mB["b"+n]=p}});
+  return {mP:mP,mB:mB};
+}
 function indexar(lista){var cont={},m={};lista.forEach(function(x){var k=chaveAp(x);cont[k]=(cont[k]||0)+1;m[k+"#"+cont[k]]=x});return m}
 var CAMPOS_CMP=[["seg","Seguradora"],["cor","Corretora"],["ts","Tipo de seguro"],["ini","Início","d"],["fim","Fim","d"],["premio","Prêmio","m"],["is","IS","m"],["st","Status"],["cond","Cond. pgto"],["canc","Data canc.","d"],["rest","Restituição","m"],["ativaTxt","Tipo"]];
 function valCmp(x,k){if(k==="ativaTxt")return x.ativa!=null?(x.ativa?"Apólice Ativa":"—"):(norm(x.tipo)==="apolice ativa"?"Apólice Ativa":"—");var v=x[k];return v==null?"":v}
@@ -1123,7 +1160,7 @@ function futuroDaApolice(p,de){var o={};p.parcelas.forEach(function(x){if(x.comp
 function difFuturo(a,b){var ks={};Object.keys(a).concat(Object.keys(b)).forEach(function(k){ks[k]=1});return Object.keys(ks).sort().filter(function(k){return Math.abs((a[k]||0)-(b[k]||0))>0.5})}
 function compararBase(base,ult){
   var deFut=comp(CUR_Y,CUR_M)>base.cutover?comp(CUR_Y,CUR_M):base.cutover;
-  var mP=indexar(ult.linhas),mB=indexar(base.apolices),novas=[],alteradas=[],soPainel=[];
+  var par=parear(ult.linhas,base.apolices),mP=par.mP,mB=par.mB,novas=[],alteradas=[],soPainel=[];
   Object.keys(mP).forEach(function(k){var l=mP[k],p=mB[k];
     if(!p){novas.push(l);return}
     var mud=[];CAMPOS_CMP.forEach(function(f){var a=valCmp(p,f[0]),b=valCmp(l,f[0]);if(f[2]==="m"?Math.abs((+a||0)-(+b||0))>0.5:String(a).trim()!==String(b).trim())mud.push({campo:f[1],de:fmtCmp(a,f[2]),para:fmtCmp(b,f[2])})});
@@ -1185,7 +1222,10 @@ $("rcAplicar").onclick=async function(){
     await operar("Atualização pela planilha "+plan.arquivo,function(base){
       var d=compararBase(base,ult),ultFech=base.fechamentos.length?base.fechamentos[base.fechamentos.length-1].comp:compAdd(base.cutover,-1);
       if(optN)d.novas.forEach(function(l){var p=linhaParaApolice(l,ult,quem,agora,ult.comp);p.parcelas=parcelasDaLinha(l,ult.ano,d.deFut);
-        p.parcelas.forEach(function(x){if(x.comp<d.deFut)x.pago=true});p.origem="planilha "+ult.nome+" (atualização)";base.apolices.push(p);nN++});
+        p.parcelas.forEach(function(x){if(x.comp<d.deFut)x.pago=true});p.origem="planilha "+ult.nome+" (atualização)";
+        // aba da planilha em mês ainda aberto no painel: o painel é quem apropria esses meses
+        var ab=primeiraAberta(base);if(ult.comp>=ab&&p.aprop){var k=compDiff(ab,ult.comp)+1;p.saldo=r2(Math.min(p.premio||Infinity,(p.saldo||0)+p.aprop*k));p.ultComp=compAdd(ab,-1)}
+        base.apolices.push(p);nN++});
       if(optA)d.alteradas.forEach(function(a){var p=base.apolices.find(function(x){return x.id===a.p.id});if(!p)return;var l=a.l;
         ["seg","cor","ts","ini","fim","premio","is","st","cond","canc","rest","cob","bu","cnpj","cc","obs"].forEach(function(k){if(l[k]!==undefined&&l[k]!==""&&l[k]!==null)p[k]=l[k]});
         p.ativa=norm(l.tipo)==="apolice ativa";
