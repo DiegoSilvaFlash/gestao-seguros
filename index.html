@@ -96,7 +96,7 @@ td.fut{color:var(--muted)} td.sel,th.sel{background:rgba(247,80,15,.06)}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
 .fbox{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
 .fbox>div{background:var(--surface-2);border-radius:10px;padding:12px 14px}.big{font-size:22px;font-weight:700;color:var(--navy)}
-dialog{border:0;border-radius:14px;background:#fff;color:var(--text);padding:0;width:min(900px,calc(100vw - 24px));box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog{max-height:94vh;overflow:auto;border:0;border-radius:14px;background:#fff;color:var(--text);padding:0;width:min(900px,calc(100vw - 24px));box-shadow:0 20px 60px rgba(0,0,0,.35)}
 dialog::backdrop{background:rgba(10,10,60,.55)}
 .dlg-h{padding:14px 18px;background:var(--navy);color:#fff;display:flex;justify-content:space-between;align-items:center;border-radius:14px 14px 0 0}
 .dlg-h h2{color:#fff}
@@ -334,6 +334,13 @@ class Zn{constructor(e,r){this.cacheOutcome=he,this.cacheManager=r,this.apiId=e.
   <div class="dlg-h"><h2 id="dlgTit">Apólice</h2><button type="button" class="btn sm" onclick="document.getElementById('dlg').close()">✕</button></div>
   <div class="form" id="dlgCampos"></div>
   <div id="dlgAviso" class="banner" style="margin:0 18px 10px" ></div>
+  <div class="parc"><h4>Apropriação manual</h4>
+    <div class="mu" style="margin-bottom:6px">Lance o valor e a competência. O valor é descontado do saldo a apropriar e entra no fechamento desse mês.</div>
+    <div class="toolbar" style="margin-bottom:8px"><label class="fl">Competência<input type="month" id="mnComp"></label><label class="fl">Valor (R$)<input type="number" step="any" id="mnValor" style="width:130px"></label>
+      <label class="fl">Tipo<select id="mnTipo"><option value="subst">Substitui a automática do mês</option><option value="adic">Soma à automática do mês</option></select></label>
+      <label class="fl">Observação<input id="mnObs" placeholder="ex.: endosso, correção" style="min-width:180px"></label><button type="button" class="btn sm primary" id="mnAdd">+ Lançar</button></div>
+    <div class="mu" id="mnSaldo" style="margin-bottom:6px"></div>
+    <div id="mnLista" class="tbl-wrap" style="margin-top:0;max-height:200px"></div></div>
   <div class="parc"><h4>Parcelas (pagamentos)</h4>
     <div class="toolbar" style="margin-bottom:8px"><label class="fl">1ª parcela<input type="month" id="parc1"></label><button type="button" class="btn sm" id="btnGerarParc">Gerar parcelas pela condição de pagamento</button><button type="button" class="btn sm" id="btnAddParc">+ Parcela</button><span class="mu" id="parcTot"></span></div>
     <div id="parcLista"></div></div>
@@ -442,7 +449,7 @@ function lerAba(ws){
   var H=rows[hi].map(norm);
   function ix(){for(var k=0;k<arguments.length;k++){var j=H.indexOf(arguments[k]);if(j>=0)return j}return -1}
   function ixs(p){return H.findIndex(function(h){return h.indexOf(p)===0})}
-  var C={tipo:ix("tipo"),emp:ix("empresa","matri","matriz"),bu:ix("bu"),cnpj:ix("cnpj"),seg:ix("seguradora"),ap:ix("n apolice"),cor:ix("corretora"),cc:ix("centro custo"),ramo:ix("ramo"),ts:ix("tipo seguro"),
+  var C={tipo:ix("tipo"),emp:ix("empresa","matri","matriz"),bu:ix("bu"),cnpj:ix("cnpj"),seg:ix("seguradora"),ap:ix("n apolice"),cor:ix("corretora"),cc:ix("centro custo"),fluig:ix("fluig","n fluig","numero fluig"),projuris:ix("projuris","n projuris","requisicao projuris"),ramo:ix("ramo"),ts:ix("tipo seguro"),
     ini:ix("ini vig"),fim:ix("fim vig"),cob:ix("cobertura"),premio:ix("premio total"),is:ixs("importancia segurada"),status:ix("status"),
     aprop:ix("apropriacao"),acum:ix("acumulado a aprop"),cond:ix("condicao de pgto"),rest:ixs("restitu"),canc:ix("data cancelamento"),obs:ix("obs")};
   var mc=[],mp=[];H.forEach(function(h,i){var k=MESES_N.indexOf(h);if(k<0)return;if(mc[k]==null)mc[k]=i;else if(mp[k]==null)mp[k]=i});
@@ -455,7 +462,7 @@ function lerAba(ws){
     var pg=MESES_N.map(function(_,k){return mc[k]!=null?r2(xNum(r[mc[k]])):0});
     var px=mp.some(function(x){return x!=null})?MESES_N.map(function(_,k){return mp[k]!=null?r2(xNum(r[mp[k]])):0}):null;
     linhas.push({ap:ap,emp:emp.toUpperCase(),ramo:ramoN(g(r,C.ramo)),seg:s(r,C.seg).toUpperCase()||"NÃO INFORMADA",cor:s(r,C.cor),tipo:s(r,C.tipo),ts:s(r,C.ts),bu:s(r,C.bu),
-      cnpj:s(r,C.cnpj),cc:s(r,C.cc),obs:s(r,C.obs),ini:xData(g(r,C.ini)),fim:xData(g(r,C.fim)),cob:xNum(g(r,C.cob)),premio:r2(xNum(g(r,C.premio))),is:r2(xNum(g(r,C.is))),
+      cnpj:s(r,C.cnpj),cc:s(r,C.cc),obs:s(r,C.obs),fluig:s(r,C.fluig).replace(/^-$/,""),projuris:s(r,C.projuris).replace(/^-$/,""),ini:xData(g(r,C.ini)),fim:xData(g(r,C.fim)),cob:xNum(g(r,C.cob)),premio:r2(xNum(g(r,C.premio))),is:r2(xNum(g(r,C.is))),
       st:s(r,C.status).toUpperCase(),aprop:r2(xNum(g(r,C.aprop))),acum:r2(xNum(g(r,C.acum))),cond:xNum(g(r,C.cond)),rest:r2(xNum(g(r,C.rest))),canc:xData(g(r,C.canc)),pg:pg,px:px});
   });
   return {linhas:linhas,temTipo:C.tipo>=0};
@@ -500,7 +507,7 @@ function parcelasDaLinha(l,ano,pagoAte){var out=[];
 function linhaParaApolice(l,ult,quem,agora,ultComp){
     var p={id:uid(),ativa:norm(l.tipo)==="apolice ativa",emp:l.emp,bu:l.bu,cnpj:l.cnpj,seg:l.seg,ap:l.ap,cor:l.cor,cc:l.cc,ramo:l.ramo,ts:l.ts,
       ini:l.ini,fim:l.fim,cob:l.cob||0,premio:l.premio,is:l.is,st:l.st||"ATIVA",cond:l.cond||0,aprop:l.aprop,saldo:l.acum,apropDe:CONFIG.cutover,ultComp:ultComp,
-      canc:l.canc,rest:l.rest,obs:l.obs,parcelas:[],origem:"planilha "+ult.nome,criadoPor:quem,criadoEm:agora,atualizadoPor:quem,atualizadoEm:agora};
+      canc:l.canc,rest:l.rest,obs:l.obs,fluig:l.fluig||"",projuris:l.projuris||"",parcelas:[],ajustes:[],origem:"planilha "+ult.nome,criadoPor:quem,criadoEm:agora,atualizadoPor:quem,atualizadoEm:agora};
     if(/RETROATIVA/.test(p.st)&&!l.acum){p.aprop=0;p.saldo=0}
     // apólice emitida sem apropriação iniciada: começa pela competência do início (retroativa no 1º fechamento)
     if(p.ativa&&!encerrada(p.st)&&!l.aprop&&!l.acum&&p.premio>0&&p.fim&&p.fim>=CONFIG.cutover+"-01"){
@@ -511,7 +518,12 @@ function linhaParaApolice(l,ult,quem,agora,ultComp){
 
 /* ================= motor de apropriação ================= */
 function primeiraAberta(base){var f=base.fechamentos;return f.length?compAdd(f[f.length-1].comp,1):base.cutover}
+function manuaisDe(p,c){var sub=0,adi=0,tem=false;(p.ajustes||[]).forEach(function(x){if(x.comp!==c)return;if(x.tipo==="adic")adi+=+x.valor||0;else{sub+=+x.valor||0;tem=true}});return {sub:r2(sub),adi:r2(adi),tem:tem,total:r2(sub+adi)}}
 function apropriaApolice(p,c,saldo,ult){ // valor da competência c dado o saldo e a última competência apropriada
+  var mn=manuaisDe(p,c);
+  if(mn.tem||mn.adi){ // apropriação manual da competência
+    var auto=0;if(!mn.tem&&!encerrada(p.st)&&p.aprop&&saldo>0){var i0=p.apropDe||c,s0=ult&&compAdd(ult,1)>i0?compAdd(ult,1):i0;if(c>=s0)auto=r2(Math.min(saldo,p.aprop*(compDiff(s0,c)+1)))}
+    var vm=r2((mn.tem?mn.sub:auto)+mn.adi);return {v:vm,saldo:r2(saldo-vm),ult:c,manual:true};}
   if(encerrada(p.st)||!p.aprop||saldo<=0)return {v:0,saldo:saldo,ult:ult};
   var ini=p.apropDe||c;var start=ult&&compAdd(ult,1)>ini?compAdd(ult,1):ini;
   if(c<start)return {v:0,saldo:saldo,ult:ult};
@@ -528,7 +540,7 @@ function linhaDeApolice(p,c,v,saldo){
   var fimM=fimDoMes(c),iniM=pd(c+"-01");
   var vig=p.ativa&&!encerrada(p.st)&&(!p.fim||pd(p.fim)>=iniM)&&(!p.ini||pd(p.ini)<=fimM);
   return {id:p.id,ap:p.ap,emp:p.emp,ramo:p.ramo,seg:p.seg,cor:p.cor,tipo:vig?"Apólice Ativa":"",ts:p.ts,bu:p.bu,cnpj:p.cnpj,cc:p.cc,obs:p.obs,ini:p.ini,fim:p.fim,cob:p.cob,
-    premio:p.premio,is:p.is,st:p.st,aprop:v,acum:saldo,cond:p.cond,rest:p.rest,canc:p.canc};
+    premio:p.premio,is:p.is,st:p.st,aprop:v,acum:saldo,cond:p.cond,rest:p.rest,canc:p.canc,fluig:p.fluig,projuris:p.projuris};
 }
 
 /* ================= armazenamento: SharePoint (Graph) ou local ================= */
@@ -801,13 +813,13 @@ function renderApolices(){
   var lst=S.base.apolices.filter(F).filter(function(p){
     if(st&&(p.st||"(sem status)")!==st)return false;
     if(tp==="ativa"&&!p.ativa)return false;if(tp==="outras"&&p.ativa)return false;
-    return !q||norm([p.ap,p.emp,p.bu,p.ramo,p.ts,p.seg,p.cor,p.st,p.cnpj,p.cc,p.obs].join(" ")).indexOf(q)>=0});
+    return !q||norm([p.ap,p.emp,p.bu,p.ramo,p.ts,p.seg,p.cor,p.st,p.cnpj,p.cc,p.obs,p.fluig,p.projuris].join(" ")).indexOf(q)>=0});
   var tot=lst.reduce(function(t,p){return t+(p.premio||0)},0);
-  var h='<thead><tr><th>#</th><th class="left">Tipo</th><th class="left">Empresa</th><th class="left">BU</th><th class="left">CNPJ</th><th class="left">Seguradora</th><th class="left">Nº apólice</th><th class="left">Corretora</th><th class="left">Centro custo</th><th class="left">Ramo</th><th class="left">Tipo de seguro</th><th>Ini vig</th><th>Fim vig</th><th>Cobertura</th><th>Prêmio total</th><th>IS</th><th class="left">Status</th><th>Apropriação</th><th>Acum. a aprop.</th><th>Cond. pgto</th><th>Parcelas pagas</th><th>Restituição</th><th>Data canc.</th><th class="left">Obs.</th><th></th></tr></thead><tbody>';
-  if(!lst.length)h+='<tr><td colspan="25" class="left mu">Nenhuma apólice para os filtros.</td></tr>';
+  var h='<thead><tr><th>#</th><th class="left">Tipo</th><th class="left">Empresa</th><th class="left">BU</th><th class="left">CNPJ</th><th class="left">Seguradora</th><th class="left">Nº apólice</th><th class="left">Corretora</th><th class="left">Centro custo</th><th class="left">Ramo</th><th class="left">Tipo de seguro</th><th>Ini vig</th><th>Fim vig</th><th>Cobertura</th><th>Prêmio total</th><th>IS</th><th class="left">Status</th><th>Apropriação</th><th>Acum. a aprop.</th><th>Cond. pgto</th><th>Parcelas pagas</th><th>Restituição</th><th>Data canc.</th><th class="left">Projuris</th><th class="left">Fluig</th><th>Aprop. manual</th><th class="left">Obs.</th><th></th></tr></thead><tbody>';
+  if(!lst.length)h+='<tr><td colspan="28" class="left mu">Nenhuma apólice para os filtros.</td></tr>';
   lst.forEach(function(p,i){var pg=p.parcelas.filter(function(x){return x.pago}).length,b=/CANCEL/.test(p.st)?"crit":/FINALIZ/.test(p.st)?"neutral":/ATIV/.test(p.st)?"good":"warn";
-    h+="<tr><td>"+(i+1)+'</td><td class="left">'+(p.ativa?"Apólice Ativa":"")+'</td><td class="left">'+esc(p.emp)+'</td><td class="left">'+esc(p.bu)+'</td><td class="left">'+esc(p.cnpj)+'</td><td class="left">'+esc(p.seg)+'</td><td class="left">'+esc(p.ap||"—")+'</td><td class="left">'+esc(p.cor)+'</td><td class="left">'+esc(p.cc)+'</td><td class="left">'+esc(p.ramo)+'</td><td class="left trunc" title="'+esc(p.ts)+'">'+esc(p.ts)+"</td><td>"+fmtD(p.ini)+"</td><td>"+fmtD(p.fim)+"</td><td>"+(p.cob||"–")+"</td><td>"+brl2(p.premio)+"</td><td>"+(p.is?brl(p.is):"–")+'</td><td class="left"><span class="badge '+b+'">'+esc(p.st||"—")+"</span></td><td>"+(p.aprop?brl2(p.aprop):"–")+"</td><td>"+(p.saldo?brl2(p.saldo):"–")+"</td><td>"+(p.cond||"–")+"</td><td>"+pg+"/"+p.parcelas.length+"</td><td>"+(p.rest?brl2(p.rest):"–")+"</td><td>"+fmtD(p.canc)+'</td><td class="left trunc" title="'+esc(p.obs)+'">'+esc(p.obs)+'</td><td><button class="btn sm" data-ed="'+p.id+'">Editar</button> <button class="btn sm danger" data-del="'+p.id+'">Excluir</button></td></tr>'});
-  if(lst.length)h+='<tr class="tot"><td colspan="14">Total ('+num(lst.length)+" linhas)</td><td>"+brl2(tot)+'</td><td colspan="10"></td></tr>';
+    h+="<tr><td>"+(i+1)+'</td><td class="left">'+(p.ativa?"Apólice Ativa":"")+'</td><td class="left">'+esc(p.emp)+'</td><td class="left">'+esc(p.bu)+'</td><td class="left">'+esc(p.cnpj)+'</td><td class="left">'+esc(p.seg)+'</td><td class="left">'+esc(p.ap||"—")+'</td><td class="left">'+esc(p.cor)+'</td><td class="left">'+esc(p.cc)+'</td><td class="left">'+esc(p.ramo)+'</td><td class="left trunc" title="'+esc(p.ts)+'">'+esc(p.ts)+"</td><td>"+fmtD(p.ini)+"</td><td>"+fmtD(p.fim)+"</td><td>"+(p.cob||"–")+"</td><td>"+brl2(p.premio)+"</td><td>"+(p.is?brl(p.is):"–")+'</td><td class="left"><span class="badge '+b+'">'+esc(p.st||"—")+"</span></td><td>"+(p.aprop?brl2(p.aprop):"–")+"</td><td>"+(p.saldo?brl2(p.saldo):"–")+"</td><td>"+(p.cond||"–")+"</td><td>"+pg+"/"+p.parcelas.length+"</td><td>"+(p.rest?brl2(p.rest):"–")+"</td><td>"+fmtD(p.canc)+'</td><td class="left">'+esc(p.projuris||"")+'</td><td class="left">'+esc(p.fluig||"")+"</td><td>"+((p.ajustes||[]).length?'<span class="badge good" title="'+esc((p.ajustes||[]).map(function(x){return compLbl(x.comp)+": "+brl2(x.valor)}).join(" | "))+'">'+(p.ajustes||[]).length+" lanç.</span>":"–")+'</td><td class="left trunc" title="'+esc(p.obs)+'">'+esc(p.obs)+'</td><td><button class="btn sm" data-ed="'+p.id+'">Editar</button> <button class="btn sm danger" data-del="'+p.id+'">Excluir</button></td></tr>'});
+  if(lst.length)h+='<tr class="tot"><td colspan="14">Total ('+num(lst.length)+" linhas)</td><td>"+brl2(tot)+'</td><td colspan="13"></td></tr>';
   $("tbApol").innerHTML=h+"</tbody>";renderDup();
   $("qtApol").innerHTML=num(lst.length)+" de "+num(S.base.apolices.length)+" linhas da base (mesmas linhas da planilha + incluídas no painel) · prêmio "+brl(tot)+' · <span class="mu">os indicadores do Painel continuam usando só as apólices ativas</span>';
 }
@@ -837,11 +849,11 @@ var CAMPOS=[
  ["ts","Tipo de seguro / descrição","text"],["ini","Início de vigência","date",1],["fim","Fim de vigência","date",1],["cob","Cobertura (meses)","number"],
  ["premio","Prêmio total (R$)","number",1],["is","Importância segurada (R$)","number"],["st","Status","sel"],["cond","Condição de pagamento (nº parcelas)","number"],
  ["aprop","Apropriação mensal (R$)","number"],["saldo","Saldo a apropriar (R$)","number"],["apropDe","Apropriar a partir de (competência)","month"],
- ["canc","Data de cancelamento","date"],["rest","Restituição (R$)","number"],["obs","Observações","text"]
+ ["canc","Data de cancelamento","date"],["rest","Restituição (R$)","number"],["projuris","Projuris (nº da requisição)","text"],["fluig","Fluig (nº do Fluig)","text"],["obs","Observações","text"]
 ];
 var EDIT=null;
 function abrirApolice(p){
-  var novo=!p;EDIT=novo?{id:null,ativa:true,st:"ATIVA",parcelas:[],cond:1}:JSON.parse(JSON.stringify(p));
+  var novo=!p;EDIT=novo?{id:null,ativa:true,st:"ATIVA",parcelas:[],ajustes:[],cond:1}:JSON.parse(JSON.stringify(p));EDIT.ajustes=EDIT.ajustes||[];
   $("dlgTit").textContent=novo?"Nova apólice":"Editar apólice "+(p.ap||"");
   $("dlgCampos").innerHTML='<label class="chk"><input type="checkbox" name="ativa" '+(EDIT.ativa?"checked":"")+'> Apólice ativa (conta nos indicadores)</label>'+CAMPOS.map(function(f){
     var v=EDIT[f[0]];v=v==null?"":v;var req=f[3]?" required":"";
@@ -849,7 +861,7 @@ function abrirApolice(p){
     if(f[2].indexOf("list:")===0)return "<label>"+f[1]+'<input name="'+f[0]+'" list="'+f[2].slice(5)+'" value="'+esc(v)+'"'+req+"></label>";
     return "<label>"+f[1]+'<input name="'+f[0]+'" type="'+f[2]+'"'+(f[2]==="number"?' step="any"':"")+' value="'+esc(v)+'"'+req+"></label>";
   }).join("")+(novo?"":'<div class="meta mu">Criada por '+esc(p.criadoPor||"—")+" em "+(p.criadoEm?new Date(p.criadoEm).toLocaleString("pt-BR"):"—")+" · última alteração: "+esc(p.atualizadoPor||"—")+" em "+(p.atualizadoEm?new Date(p.atualizadoEm).toLocaleString("pt-BR"):"—")+(p.origem?" · origem: "+esc(p.origem):"")+"</div>");
-  $("dlgAviso").textContent="";$("btnExcluir").hidden=novo;renderParcelasEdit();$("dlg").showModal();
+  $("dlgAviso").textContent="";$("btnExcluir").hidden=novo;renderParcelasEdit();renderManuaisEdit();$("dlg").showModal();
 }
 function lerForm(){var fd=new FormData($("dlgForm")),o={};fd.forEach(function(v,k){o[k]=v});o.ativa=!!$("dlgForm").querySelector('[name=ativa]').checked;
   ["cob","premio","is","cond","aprop","saldo","rest"].forEach(function(k){o[k]=r2(xNum(String(o[k]||"").replace(",",".")))});
@@ -863,6 +875,30 @@ $("dlgForm").addEventListener("input",function(e){
     var s=r2(Math.max(0,(EDIT.saldo||0)+d));f.saldo.value=s;f.aprop.value=r2(s/rest);
     $("dlgAviso").textContent="Prêmio alterado em "+brl2(d)+": saldo a apropriar recalculado para "+brl2(s)+" e apropriação mensal para "+brl2(s/rest)+" ("+rest+" meses restantes a partir de "+compLbl(ab)+"). Ajuste se precisar.";}
 });
+function saldoPrevisto(ateComp){ // saldo projetado da apólice em edição até a competência (sem os manuais dessa competência)
+  var f=$("dlgForm"),p=Object.assign({},EDIT,{aprop:xNum(f.aprop.value),saldo:xNum(f.saldo.value),apropDe:f.apropDe.value||EDIT.apropDe,st:f.st.value,ajustes:(EDIT.ajustes||[])});
+  var de=primeiraAberta(S.base),s=p.saldo||0,u=p.ultComp;for(var c=de;c<ateComp;c=compAdd(c,1)){var r=apropriaApolice(p,c,s,u);s=r.saldo;u=r.ult}return r2(s)}
+function renderManuaisEdit(){
+  var ab=primeiraAberta(S.base),ls=(EDIT.ajustes||[]).slice().sort(function(a,b){return a.comp.localeCompare(b.comp)});
+  $("mnLista").innerHTML=ls.length?'<table><thead><tr><th class="left">Competência</th><th>Valor</th><th class="left">Tipo</th><th class="left">Observação</th><th class="left">Lançado por</th><th></th></tr></thead><tbody>'+ls.map(function(x){var fech=x.comp<ab;
+    return '<tr><td class="left">'+compLbl(x.comp)+(fech?' <span class="badge neutral">fechado</span>':"")+"</td><td>"+brl2(x.valor)+'</td><td class="left">'+(x.tipo==="adic"?"Soma à automática":"Substitui a automática")+'</td><td class="left">'+esc(x.obs||"")+'</td><td class="left">'+esc(x.por||"")+'</td><td>'+(fech?"":'<button type="button" class="btn sm danger" data-rmaj="'+x.id+'">✕</button>')+"</td></tr>"}).join("")+"</tbody></table>":'<div class="mu">Nenhuma apropriação manual. Sem lançamento, o mês usa a apropriação mensal automática.</div>';
+  if(!$("mnComp").value||$("mnComp").value<ab)$("mnComp").value=ab;
+  $("mnComp").min=ab;atualizaSaldoMn();
+}
+function atualizaSaldoMn(){var c=$("mnComp").value;if(!c){$("mnSaldo").textContent="";return}
+  try{var s=saldoPrevisto(c);$("mnSaldo").textContent="Saldo a apropriar antes de "+compLbl(c)+": "+brl2(s)}catch(e){$("mnSaldo").textContent=""}}
+$("mnComp").addEventListener("change",atualizaSaldoMn);
+$("mnAdd").onclick=function(){var c=$("mnComp").value,v=r2(xNum(String($("mnValor").value).replace(",","."))),t=$("mnTipo").value,ab=primeiraAberta(S.base);
+  if(!c){alert("Informe o mês de competência.");return}
+  if(c<S.base.cutover){alert("Até "+compLbl(compAdd(S.base.cutover,-1))+" a apropriação vem da planilha.");return}
+  if(c<ab){alert(compLbl(c)+" já está fechado. Reabra o fechamento para lançar nessa competência.");return}
+  if(!v){alert("Informe o valor.");return}
+  var s=saldoPrevisto(c);if(v>s+0.005&&!confirm("O valor ("+brl2(v)+") é maior que o saldo a apropriar previsto para "+compLbl(c)+" ("+brl2(s)+"). Lançar mesmo assim?"))return;
+  if(t!=="adic"&&EDIT.ajustes.some(function(x){return x.comp===c&&x.tipo!=="adic"})&&!confirm("Já existe apropriação manual que substitui "+compLbl(c)+". Somar este valor a ela?"))return;
+  EDIT.ajustes.push({id:uid(),comp:c,valor:v,tipo:t,obs:$("mnObs").value.trim(),por:Store.usuario(),em:new Date().toISOString()});
+  $("mnValor").value="";$("mnObs").value="";renderManuaisEdit();
+  $("dlgAviso").textContent="Apropriação manual de "+brl2(v)+" em "+compLbl(c)+" incluída. Clique em Salvar para gravar.";};
+$("mnLista").addEventListener("click",function(e){var id=e.target.dataset.rmaj;if(!id)return;EDIT.ajustes=EDIT.ajustes.filter(function(x){return x.id!==id});renderManuaisEdit()});
 function renderParcelasEdit(){
   var ps=EDIT.parcelas.slice().sort(function(a,b){return a.comp.localeCompare(b.comp)});
   $("parcLista").innerHTML=ps.length?ps.map(function(x){return '<div class="prow" data-id="'+x.id+'"><input type="month" value="'+x.comp+'" data-k="comp"><input type="number" step="any" value="'+x.valor+'" data-k="valor"><label class="chk"><input type="checkbox" data-k="pago" '+(x.pago?"checked":"")+'> pago</label><input type="date" value="'+(x.dataPg||"")+'" data-k="dataPg" title="Data do pagamento"><button type="button" class="btn sm danger" data-rm="'+x.id+'">✕</button></div>'}).join(""):'<div class="mu">Nenhuma parcela. Use “Gerar parcelas”.</div>';
@@ -878,7 +914,7 @@ $("btnGerarParc").onclick=function(){var o=lerForm(),n=Math.max(1,o.cond||1),c0=
   var pagas=EDIT.parcelas.filter(function(x){return x.pago}),resto=r2(o.premio-pagas.reduce(function(t,x){return t+x.valor},0)),base=r2(resto/n);
   EDIT.parcelas=pagas;for(var k=0;k<n;k++)EDIT.parcelas.push({id:uid(),comp:compAdd(c0,k),valor:k===n-1?r2(resto-base*(n-1)):base,pago:false,dataPg:""});renderParcelasEdit()};
 $("dlgForm").addEventListener("submit",async function(e){
-  e.preventDefault();var o=lerForm(),id=EDIT.id,parc=EDIT.parcelas,quem=Store.usuario(),agora=new Date().toISOString();
+  e.preventDefault();var o=lerForm(),id=EDIT.id,parc=EDIT.parcelas,aj=(EDIT.ajustes||[]).slice(),quem=Store.usuario(),agora=new Date().toISOString();
   if(o.fim&&o.ini&&o.fim<o.ini){alert("Fim de vigência anterior ao início.");return}
   var avisos=[];
   if(!parc.length&&o.premio>0){var n=Math.max(1,o.cond||1),c0=$("parc1").value||compDe(o.ini)||comp(CUR_Y,CUR_M),b=r2(o.premio/n);parc=[];
@@ -888,8 +924,8 @@ $("dlgForm").addEventListener("submit",async function(e){
   $("dlg").close();
   await operar(id?"Apólice "+(o.ap||"")+" alterada":"Apólice "+(o.ap||"")+" incluída",function(base){
     if(id){var p=base.apolices.find(function(x){return x.id===id});if(!p){alert("Esta apólice foi excluída por outra pessoa.");return false}
-      Object.assign(p,o,{parcelas:parc,atualizadoPor:quem,atualizadoEm:agora});if(!p.apropDe)p.apropDe=compDe(p.ini)||base.cutover}
-    else base.apolices.push(Object.assign({id:uid(),ultComp:null,origem:"painel",criadoPor:quem,criadoEm:agora,atualizadoPor:quem,atualizadoEm:agora},o,{apropDe:o.apropDe||compDe(o.ini)||base.cutover,parcelas:parc}));
+      Object.assign(p,o,{parcelas:parc,ajustes:aj,atualizadoPor:quem,atualizadoEm:agora});if(!p.apropDe)p.apropDe=compDe(p.ini)||base.cutover}
+    else base.apolices.push(Object.assign({id:uid(),ajustes:aj,ultComp:null,origem:"painel",criadoPor:quem,criadoEm:agora,atualizadoPor:quem,atualizadoEm:agora},o,{apropDe:o.apropDe||compDe(o.ini)||base.cutover,parcelas:parc}));
   });
   if(avisos.length)setTimeout(function(){alert(avisos.join("\n\n"))},300);
 });
@@ -944,7 +980,7 @@ function renderFechamento(){
   var ab=primeiraAberta(S.base),F=filtro(),c=comp(+$("fAno").value,+$("fMes").value),a=abaDe(c);
   var porId={};S.base.apolices.forEach(function(p){porId[p.id]=p});
   var estado=c<S.base.cutover?"planilha":a.fonte==="fechado"?"fechado":c===ab?"aberto":"futuro";
-  var lin=a.linhas.filter(function(l){return l.aprop}).map(function(l){var p=l.id&&porId[l.id],am=p?p.aprop:l.aprop;return {l:l,am:am,v:l.aprop,saldo:l.acum,retro:p&&l.aprop>am+0.01}});
+  var lin=a.linhas.filter(function(l){return l.aprop}).map(function(l){var p=l.id&&porId[l.id],am=p?p.aprop:l.aprop;var mn=p?manuaisDe(p,c):{tem:false,adi:0};var mo=p?(p.ajustes||[]).filter(function(x){return x.comp===c}).map(function(x){return brl2(x.valor)+(x.obs?" - "+x.obs:"")+" ("+(x.por||"")+")"}).join("; "):"";return {l:l,am:am,v:l.aprop,saldo:l.acum,retro:p&&!(mn.tem||mn.adi>0)&&l.aprop>am+0.01,manual:mn.tem||mn.adi>0,manualObs:mo}});
   var tot=lin.reduce(function(t,x){return t+x.v},0),retro=lin.filter(function(x){return x.retro});
   var parc=[];S.base.apolices.forEach(function(p){p.parcelas.forEach(function(x){if(x.comp===c)parc.push(x)})});
   var pAb=parc.filter(function(x){return !x.pago}),pPg=parc.filter(function(x){return x.pago});
@@ -958,7 +994,7 @@ function renderFechamento(){
   var vis=lin.filter(function(x){return F(x.l)}).sort(function(a,b){return b.v-a.v});
   var h='<thead><tr><th>Nº apólice</th><th class="left">Empresa</th><th class="left">Ramo</th><th class="left">Seguradora</th><th>Aprop./mês</th><th>'+(estado==="aberto"||estado==="futuro"?"Apropriar em ":"Apropriado em ")+compLbl(c)+'</th><th>Saldo após</th><th class="left">Obs.</th></tr></thead><tbody>';
   if(!vis.length)h+='<tr><td colspan="8" class="left mu">Sem apropriação neste mês para os filtros selecionados.</td></tr>';
-  vis.slice(0,600).forEach(function(x){var l=x.l;h+="<tr><td>"+esc(l.ap)+'</td><td class="left">'+esc(l.emp)+'</td><td class="left">'+esc(l.ramo)+'</td><td class="left">'+esc(l.seg)+"</td><td>"+brl2(x.am)+"</td><td><b>"+brl2(x.v)+"</b></td><td>"+brl2(x.saldo||0)+'</td><td class="left">'+(x.retro?'<span class="badge warn">Retroativa</span>':"")+(x.saldo<=0.005&&estado!=="planilha"?' <span class="badge neutral">Última parcela</span>':"")+"</td></tr>"});
+  vis.slice(0,600).forEach(function(x){var l=x.l;h+="<tr><td>"+esc(l.ap)+'</td><td class="left">'+esc(l.emp)+'</td><td class="left">'+esc(l.ramo)+'</td><td class="left">'+esc(l.seg)+"</td><td>"+brl2(x.am)+"</td><td><b>"+brl2(x.v)+"</b></td><td>"+brl2(x.saldo||0)+'</td><td class="left">'+(x.manual?'<span class="badge good" title="'+esc(x.manualObs)+'">Manual</span> ':"")+(x.retro&&!x.manual?'<span class="badge warn">Retroativa</span>':"")+(x.saldo<=0.005&&estado!=="planilha"?' <span class="badge neutral">Última parcela</span>':"")+"</td></tr>"});
   if(vis.length)h+='<tr class="tot"><td>Total ('+vis.length+')</td><td></td><td></td><td></td><td></td><td>'+brl2(vis.reduce(function(t,x){return t+x.v},0))+"</td><td>"+brl2(vis.reduce(function(t,x){return t+(x.saldo||0)},0))+"</td><td></td></tr>";
   $("tbFech").innerHTML=h+"</tbody>";
   var fs=S.base.fechamentos.slice().reverse();
@@ -995,12 +1031,12 @@ function exportarExcel(comps){
   var wb=XLSX.utils.book_new();
   comps.forEach(function(c){
     var a=abaDe(c),ano=+c.slice(0,4),porId={};S.base.apolices.forEach(function(p){porId[p.id]=p});
-    var hdr=["TIPO","EMPRESA","BU","CNPJ","SEGURADORA","Nº APÓLICE","CORRETORA","CENTRO CUSTO","RAMO","TIPO SEGURO","INI VIG","FIM VIG","COBERTURA","PRÊMIO TOTAL","IMPORTÂNCIA SEGURADA (IS)","Status","APROPRIAÇÃO","ACUMULADO A APROP","CONDIÇÃO DE PGTO"].concat(MESES_N.map(function(m){return m.toUpperCase().replace("MARCO","MARÇO")})).concat(MESES_N.map(function(m){return m.toUpperCase().replace("MARCO","MARÇO")})).concat(["RESTITUIÇÃO","DATA CANCELAMENTO","OBS"]);
+    var hdr=["TIPO","EMPRESA","BU","CNPJ","SEGURADORA","Nº APÓLICE","CORRETORA","CENTRO CUSTO","RAMO","TIPO SEGURO","INI VIG","FIM VIG","COBERTURA","PRÊMIO TOTAL","IMPORTÂNCIA SEGURADA (IS)","Status","APROPRIAÇÃO","ACUMULADO A APROP","CONDIÇÃO DE PGTO"].concat(MESES_N.map(function(m){return m.toUpperCase().replace("MARCO","MARÇO")})).concat(MESES_N.map(function(m){return m.toUpperCase().replace("MARCO","MARÇO")})).concat(["RESTITUIÇÃO","DATA CANCELAMENTO","PROJURIS","FLUIG","APROPRIAÇÃO MANUAL","OBS"]);
     var rows=[hdr];
     a.linhas.forEach(function(l){var p=porId[l.id],pg=Array(12).fill(0);
       var px=Array(12).fill(0);if(p)p.parcelas.forEach(function(x){var y=+x.comp.slice(0,4);if(y===ano)pg[+x.comp.slice(5,7)-1]+=x.valor;else if(y===ano+1)px[+x.comp.slice(5,7)-1]+=x.valor});else{if(l.pg)pg=l.pg.slice();if(l.px)px=l.px.slice()}
       var dt=function(s){var d=pd(s);return d?{t:"n",v:(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/DAY,z:"dd/mm/yyyy"}:""};
-      rows.push([p?(p.ativa?"Apólice Ativa":""):l.tipo,l.emp,l.bu,l.cnpj,l.seg,l.ap,l.cor,l.cc,l.ramo,l.ts,dt(l.ini),dt(l.fim),l.cob||"",l.premio,l.is||"",l.st,l.aprop||"",l.acum||"",l.cond||""].concat(pg.map(function(v){return v||""})).concat(px.map(function(v){return v||""})).concat([l.rest||"",dt(l.canc),l.obs||""]))});
+      rows.push([p?(p.ativa?"Apólice Ativa":""):l.tipo,l.emp,l.bu,l.cnpj,l.seg,l.ap,l.cor,l.cc,l.ramo,l.ts,dt(l.ini),dt(l.fim),l.cob||"",l.premio,l.is||"",l.st,l.aprop||"",l.acum||"",l.cond||""].concat(pg.map(function(v){return v||""})).concat(px.map(function(v){return v||""})).concat([l.rest||"",dt(l.canc),(p?p.projuris:l.projuris)||"",(p?p.fluig:l.fluig)||"",(p&&(p.ajustes||[]).some(function(x){return x.comp===c}))?(p.ajustes||[]).filter(function(x){return x.comp===c}).reduce(function(t,x){return t+(+x.valor||0)},0):"",l.obs||""]))});
     var ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=hdr.map(function(h,i){return {wch:i===9?40:14}});ws["!autofilter"]={ref:XLSX.utils.encode_range({s:{c:0,r:0},e:{c:hdr.length-1,r:rows.length-1}})};
     XLSX.utils.book_append_sheet(wb,ws,MESES_L[+c.slice(5,7)-1]+(comps.length>12?" "+c.slice(2,4):""));
   });
@@ -1152,7 +1188,7 @@ function parear(linhas,apolices){
   return {mP:mP,mB:mB};
 }
 function indexar(lista){var cont={},m={};lista.forEach(function(x){var k=chaveAp(x);cont[k]=(cont[k]||0)+1;m[k+"#"+cont[k]]=x});return m}
-var CAMPOS_CMP=[["seg","Seguradora"],["cor","Corretora"],["ts","Tipo de seguro"],["ini","Início","d"],["fim","Fim","d"],["premio","Prêmio","m"],["is","IS","m"],["st","Status"],["cond","Cond. pgto"],["canc","Data canc.","d"],["rest","Restituição","m"],["ativaTxt","Tipo"]];
+var CAMPOS_CMP=[["fluig","Fluig"],["projuris","Projuris"],["seg","Seguradora"],["cor","Corretora"],["ts","Tipo de seguro"],["ini","Início","d"],["fim","Fim","d"],["premio","Prêmio","m"],["is","IS","m"],["st","Status"],["cond","Cond. pgto"],["canc","Data canc.","d"],["rest","Restituição","m"],["ativaTxt","Tipo"]];
 function valCmp(x,k){if(k==="ativaTxt")return x.ativa!=null?(x.ativa?"Apólice Ativa":"—"):(norm(x.tipo)==="apolice ativa"?"Apólice Ativa":"—");var v=x[k];return v==null?"":v}
 function fmtCmp(v,t){return t==="m"?brl2(+v||0):t==="d"?fmtD(v):String(v||"—")}
 function futuroDaLinha(l,ano,de){var o={};l.pg.forEach(function(v,m){var c=comp(ano,m);if(v&&c>=de)o[c]=(o[c]||0)+v});if(l.px)l.px.forEach(function(v,m){var c=comp(ano+1,m);if(v&&c>=de)o[c]=(o[c]||0)+v});return o}
@@ -1163,7 +1199,7 @@ function compararBase(base,ult){
   var par=parear(ult.linhas,base.apolices),mP=par.mP,mB=par.mB,novas=[],alteradas=[],soPainel=[];
   Object.keys(mP).forEach(function(k){var l=mP[k],p=mB[k];
     if(!p){novas.push(l);return}
-    var mud=[];CAMPOS_CMP.forEach(function(f){var a=valCmp(p,f[0]),b=valCmp(l,f[0]);if(f[2]==="m"?Math.abs((+a||0)-(+b||0))>0.5:String(a).trim()!==String(b).trim())mud.push({campo:f[1],de:fmtCmp(a,f[2]),para:fmtCmp(b,f[2])})});
+    var mud=[];CAMPOS_CMP.forEach(function(f){var a=valCmp(p,f[0]),b=valCmp(l,f[0]);if((f[0]==="fluig"||f[0]==="projuris")&&!String(b).trim())return;if(f[2]==="m"?Math.abs((+a||0)-(+b||0))>0.5:String(a).trim()!==String(b).trim())mud.push({campo:f[1],de:fmtCmp(a,f[2]),para:fmtCmp(b,f[2])})});
     var fp=futuroDaLinha(l,ult.ano,deFut),fb=futuroDaApolice(p,deFut);
     // parcelas pagas no painel não são sobrescritas: compara só o que está em aberto
     p.parcelas.forEach(function(x){if(x.pago&&x.comp>=deFut&&fp[x.comp])fp[x.comp]-=x.valor});Object.keys(fp).forEach(function(c){if(Math.abs(fp[c])<0.5)delete fp[c]});
@@ -1227,7 +1263,7 @@ $("rcAplicar").onclick=async function(){
         var ab=primeiraAberta(base);if(ult.comp>=ab&&p.aprop){var k=compDiff(ab,ult.comp)+1;p.saldo=r2(Math.min(p.premio||Infinity,(p.saldo||0)+p.aprop*k));p.ultComp=compAdd(ab,-1)}
         base.apolices.push(p);nN++});
       if(optA)d.alteradas.forEach(function(a){var p=base.apolices.find(function(x){return x.id===a.p.id});if(!p)return;var l=a.l;
-        ["seg","cor","ts","ini","fim","premio","is","st","cond","canc","rest","cob","bu","cnpj","cc","obs"].forEach(function(k){if(l[k]!==undefined&&l[k]!==""&&l[k]!==null)p[k]=l[k]});
+        ["seg","cor","ts","ini","fim","premio","is","st","cond","canc","rest","cob","bu","cnpj","cc","obs","fluig","projuris"].forEach(function(k){if(l[k]!==undefined&&l[k]!==""&&l[k]!==null)p[k]=l[k]});
         p.ativa=norm(l.tipo)==="apolice ativa";
         // apropriação: só acompanha a planilha se a aba for do mesmo mês do último fechamento do painel
         if(ult.comp===ultFech){p.aprop=l.aprop;p.saldo=l.acum}
